@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>旅行規劃站</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="旅行規劃站">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <meta name="theme-color" content="#1e40af">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans TC', sans-serif;
+      font-size: 17px;
+      line-height: 1.55;
+      background: #eef2f7;
+      color: #1a202c;
+    }
+
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      background: #fff;
+      position: relative;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1e40af;
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .header-title {
+      font-size: 19px;
+      font-weight: 700;
+      flex: 1;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .icon-btn:active { background: rgba(255,255,255,0.15); }
+    .back-btn-text { font-size: 16px; }
+
+    /* ── Drawer ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .drawer {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 270px;
+      background: #fff;
+      z-index: 201;
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto;
+      padding-bottom: 24px;
+    }
+    .drawer.open { transform: translateX(0); }
+
+    .drawer-head {
+      background: #1e40af;
+      color: #fff;
+      padding: 20px 18px 16px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .year-group { margin-top: 4px; }
+    .year-toggle {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .year-toggle .chev { transition: transform 0.2s; display: inline-block; }
+    .year-toggle.collapsed .chev { transform: rotate(-90deg); }
+    .year-trips { overflow: hidden; }
+
+    .drawer-item {
+      padding: 10px 18px 10px 30px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #334155;
+      border-left: 3px solid transparent;
+      transition: background 0.15s;
+    }
+    .drawer-item:hover { background: #eff6ff; border-left-color: #3b82f6; color: #1d4ed8; }
+
+    /* ── Pages ── */
+    .page { padding: 16px; }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin: 20px 0 8px;
+    }
+    .section-label:first-child { margin-top: 4px; }
+
+    /* ── Trip Card ── */
+    .trip-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s, transform 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .trip-card:active { transform: scale(0.975); box-shadow: none; }
+    .trip-card-body { padding: 15px 17px; }
+    .trip-card-title { font-size: 19px; font-weight: 700; margin-bottom: 3px; }
+    .trip-card-dates { font-size: 14px; color: #64748b; margin-bottom: 9px; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge-upcoming { background: #dbeafe; color: #1d4ed8; }
+    .badge-ongoing  { background: #dcfce7; color: #15803d; }
+    .badge-done     { background: #f1f5f9; color: #64748b; }
+
+    .trip-card.ongoing {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .countdown {
+      font-size: 13px;
+      color: #64748b;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+    .trip-card.ongoing .countdown { color: #15803d; }
+
+    /* ── Detail Header ── */
+    .detail-intro {
+      padding: 16px 16px 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .detail-intro-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .detail-intro-meta { font-size: 14px; color: #64748b; display: flex; align-items: center; gap: 8px; }
+
+    /* ── Day Card ── */
+    .days-list { padding: 12px 16px; }
+
+    .day-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .day-header {
+      background: #1e40af;
+      color: #fff;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .day-num {
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.7;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .day-date {
+      font-size: 16px;
+      font-weight: 700;
+      flex: 1;
+    }
+    .day-hotel {
+      font-size: 12px;
+      background: rgba(255,255,255,0.18);
+      padding: 2px 8px;
+      border-radius: 10px;
+      max-width: 130px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .day-body { padding: 10px 14px; }
+
+    .act-row {
+      padding: 5px 0;
+      border-bottom: 1px solid #f8fafc;
+    }
+    .act-row:last-child { border-bottom: none; }
+
+    .act-main  { font-size: 16px; color: #1e293b; white-space: pre-wrap; }
+    .act-detail{ font-size: 14px; color: #64748b; white-space: pre-wrap; margin-top: 1px; }
+    .act-note  { font-size: 13px; color: #7c3aed; white-space: pre-wrap; margin-top: 2px; }
+
+    .map-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #eff6ff;
+      color: #2563eb;
+      padding: 2px 9px;
+      border-radius: 8px;
+      font-size: 13px;
+      text-decoration: none;
+      margin-top: 4px;
+      margin-right: 4px;
+    }
+    .map-btn:active { background: #dbeafe; }
+
+    /* ── Loading / Error ── */
+    .center-msg {
+      padding: 64px 24px;
+      text-align: center;
+      color: #94a3b8;
+    }
+    .spinner {
+      width: 34px; height: 34px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .err-icon { font-size: 36px; margin-bottom: 10px; }
+    .err-title { color: #ef4444; font-weight: 700; font-size: 17px; }
+    .err-msg { font-size: 13px; margin-top: 6px; }
+
+    /* ── Expense Table ── */
+    .expense-section {
+      margin: 4px 16px 28px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .expense-header {
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .expense-header-title { font-size: 15px; font-weight: 700; color: #374151; }
+    .expense-header-sub { font-size: 12px; color: #94a3b8; }
+    .expense-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .expense-table td { padding: 8px 12px; border-top: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+    .expense-table .exp-amt { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .expense-table .exp-note { color: #94a3b8; font-size: 12px; }
+    .expense-table tr.exp-total td {
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-top: 2px solid #bfdbfe;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header" id="header">
+    <button class="icon-btn" id="menuBtn" onclick="toggleDrawer()">☰</button>
+    <button class="icon-btn" id="backBtn" onclick="goHome()" style="display:none">
+      <span>‹</span><span class="back-btn-text">返回</span>
+    </button>
+    <span class="header-title" id="headerTitle">✈️ 旅行規劃站</span>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-head">✈️ 旅行規劃站</div>
+    <div id="drawerList"></div>
+  </div>
+
+  <div id="content">
+    <div class="center-msg">
+      <div class="spinner"></div>
+      載入行程中⋯
+    </div>
+  </div>
+
+</div>
+<script>
+const SHEET_ID = '1GTnDgfwZVAvEYySHPf8Kzo2pBv4T-81zfBPDU22aQe4';
+const API_KEY  = 'AIzaSyDQFgP6nnZv8-adBS8SKOSSJhme4mIIAoU';
+const BASE     = 'https://sheets.googleapis.com/v4/spreadsheets';
+
+let trips = [];
+
+// ── API ──────────────────────────────────────────────────
+
+async function api(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  const r = await fetch(`${BASE}/${SHEET_ID}${path}${sep}key=${API_KEY}`);
+  if (!r.ok) throw new Error(`API ${r.status}`);
+  return r.json();
+}
+
+// ── Parse ────────────────────────────────────────────────
+
+function parseName(name) {
+  const m = name.match(/^(\d{2})(\d{2})_(.+)$/);
+  if (!m) return { year: 2000, month: 1, title: name };
+  return { year: 2000 + +m[1], month: +m[2], title: m[3] };
+}
+
+function parseDateLabel(label, year) {
+  const m = label.trim().match(/^(\d{1,2})\/(\d{1,2})/);
+  if (!m) return null;
+  return new Date(year, +m[1] - 1, +m[2]);
+}
+
+function extractMaps(text) {
+  const re = /https?:\/\/(maps\.google\.com|goo\.gl\/maps|maps\.app\.goo\.gl)\S*/g;
+  const links = [...text.matchAll(re)].map(m => m[0]);
+  return { text: text.replace(re, '').trim(), links };
+}
+
+function buildTrip(props, rows) {
+  const { year, month, title } = parseName(props.title);
+  if (!rows || rows.length < 2) return null;
+
+  const hdr = rows[0] || [];
+  const expLabel = (hdr[7] || '').trim();
+
+  const days = [];
+  const expenses = [];
+  let cur = null;
+
+  for (const row of rows.slice(1)) {
+    if (!row || !row.length) continue;
+    const [dateRaw='', actRaw='', detailRaw='', hotelRaw='', noteRaw=''] = row;
+    const dateCell  = dateRaw.trim();
+    const actCell   = actRaw.trim();
+    const detailCell= detailRaw.trim();
+    const hotelCell = hotelRaw.trim();
+    const noteCell  = noteRaw.trim();
+
+    const expItem = (row[6] || '').trim();
+    const expAmt  = (row[7] || '').trim();
+    const expNote = (row[8] || '').trim();
+    if (expItem) expenses.push({ item: expItem, amount: expAmt, note: expNote });
+
+    if (dateCell) {
+      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, acts: [] };
+      days.push(cur);
+      if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
+    } else if (cur) {
+      if (hotelCell && !cur.hotel) cur.hotel = hotelCell;
+      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
+    }
+  }
+
+  const validDays = days.filter(d => d.date);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = validDays[0]?.date ?? new Date(year, month-1, 1);
+  const end   = validDays[validDays.length-1]?.date ?? start;
+
+  const status = end < today ? 'done' : start <= today ? 'ongoing' : 'upcoming';
+  const fmt = d => `${d.getMonth()+1}/${d.getDate()}`;
+  const range = start.getTime() === end.getTime()
+    ? `${year}/${fmt(start)}`
+    : `${year}/${fmt(start)} ～ ${fmt(end)}`;
+
+  return { name: props.title, title, year, month, status, range, start, end, days, expenses, expLabel };
+}
+
+// ── Render helpers ───────────────────────────────────────
+
+function getFlag(title) {
+  const map = [
+    [/沖繩|東京|富士|北海道|京都|大阪|名古屋|福岡|札幌|留壽都|軽井澤|輕井澤|日本|奈良|廣島|神戶/, '🇯🇵'],
+    [/日月潭|台灣|台北|台南|台中|墾丁|花蓮|阿里山|澎湖|九份|農曆年/, '🇹🇼'],
+    [/峴港|河內|胡志明|越南|富國|會安|大叻/, '🇻🇳'],
+    [/宿霧|菲律賓|長灘|巴拉望/, '🇵🇭'],
+    [/韓國|首爾|釜山|濟州/, '🇰🇷'],
+    [/泰國|曼谷|清邁|普吉|蘇梅/, '🇹🇭'],
+    [/新加坡/, '🇸🇬'],
+    [/峇里|巴里島/, '🇮🇩'],
+    [/夏威夷/, '🇺🇸'],
+    [/法國|巴黎/, '🇫🇷'],
+    [/義大利|羅馬|米蘭/, '🇮🇹'],
+    [/英國|倫敦/, '🇬🇧'],
+    [/澳洲/, '🇦🇺'],
+  ];
+  for (const [re, flag] of map) {
+    if (re.test(title)) return flag;
+  }
+  return '✈️';
+}
+
+function getCountdown(t) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (t.status === 'upcoming') {
+    const days = Math.round((t.start - today) / 86400000);
+    if (days === 0) return '今天出發！';
+    if (days === 1) return '明天出發！';
+    return `${days} 天後出發`;
+  }
+  if (t.status === 'ongoing') {
+    const day = Math.round((today - t.start) / 86400000) + 1;
+    return `旅行第 ${day} 天`;
+  }
+  return '';
+}
+
+const BADGE = {
+  upcoming: ['badge-upcoming','未開始'],
+  ongoing:  ['badge-ongoing', '進行中'],
+  done:     ['badge-done',    '已完成'],
+};
+
+function badge(status) {
+  const [cls, lbl] = BADGE[status];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Home ─────────────────────────────────────────────────
+
+function goHome() {
+  document.getElementById('menuBtn').style.display = '';
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('headerTitle').textContent = '✈️ 旅行規劃站';
+  closeDrawer();
+
+  const thisYear = new Date().getFullYear();
+  const active = trips.filter(t => t.year === thisYear && t.status !== 'done');
+  const rest   = trips.filter(t => !(t.year === thisYear && t.status !== 'done'));
+
+  let html = '<div class="page">';
+
+  if (active.length) {
+    html += '<div class="section-label">即將出發</div>';
+    active.forEach(t => { html += cardHTML(t); });
+  }
+  if (rest.length) {
+    html += `<div class="section-label">${active.length ? '其他行程' : '所有行程'}</div>`;
+    rest.forEach(t => { html += cardHTML(t); });
+  }
+
+  html += '</div>';
+  document.getElementById('content').innerHTML = html;
+  window.scrollTo(0,0);
+}
+
+function cardHTML(t) {
+  const idx = trips.indexOf(t);
+  const flag = getFlag(t.title);
+  const countdown = getCountdown(t);
+  const cdHTML = countdown ? `<span class="countdown">${countdown}</span>` : '';
+  return `
+    <div class="trip-card ${t.status === 'ongoing' ? 'ongoing' : ''}" onclick="openTrip(${idx})">
+      <div class="trip-card-body">
+        <div class="trip-card-title">${flag} ${esc(t.title)}</div>
+        <div class="trip-card-dates">${esc(t.range)}</div>
+        ${badge(t.status)}${cdHTML}
+      </div>
+    </div>`;
+}
+
+// ── Detail ───────────────────────────────────────────────
+
+function openTrip(idx) {
+  const t = trips[idx];
+  document.getElementById('menuBtn').style.display = 'none';
+  document.getElementById('backBtn').style.display = '';
+  document.getElementById('headerTitle').textContent = t.title;
+  closeDrawer();
+
+  const flag = getFlag(t.title);
+  const countdown = getCountdown(t);
+  const cdHTML = countdown ? `<span class="countdown">${countdown}</span>` : '';
+  let html = `
+    <div class="detail-intro">
+      <div class="detail-intro-title">${flag} ${esc(t.title)}</div>
+      <div class="detail-intro-meta">${esc(t.range)} ${badge(t.status)}${cdHTML}</div>
+    </div>
+    <div class="days-list">`;
+
+  t.days.forEach((day, i) => { html += dayHTML(day, i+1); });
+  html += '</div>';
+  if (t.expenses.length) html += expenseHTML(t);
+
+  document.getElementById('content').innerHTML = html;
+  window.scrollTo(0,0);
+}
+
+function dayHTML(day, n) {
+  let h = '<div class="day-card"><div class="day-header">';
+  h += `<span class="day-num">Day ${n}</span>`;
+  h += `<span class="day-date">${esc(day.dateLabel)}</span>`;
+  if (day.hotel) h += `<span class="day-hotel">🏨 ${esc(day.hotel)}</span>`;
+  h += '</div><div class="day-body">';
+
+  if (!day.acts.length) {
+    h += '<div class="act-row" style="color:#94a3b8">（行程待確認）</div>';
+  } else {
+    day.acts.forEach(a => {
+      if (!a.act && !a.detail) return;
+      h += '<div class="act-row">';
+      const { text: actTxt, links: actLinks } = extractMaps(a.act);
+      const { text: detTxt, links: detLinks } = extractMaps(a.detail);
+      if (actTxt)  h += `<div class="act-main">${esc(actTxt)}</div>`;
+      if (detTxt)  h += `<div class="act-detail">${esc(detTxt)}</div>`;
+      if (a.note)  h += `<div class="act-note">💬 ${esc(a.note)}</div>`;
+      [...actLinks, ...detLinks].forEach(url => {
+        h += `<a class="map-btn" href="${esc(url)}" target="_blank">📍 地圖</a>`;
+      });
+      h += '</div>';
+    });
+  }
+
+  h += '</div></div>';
+  return h;
+}
+
+// ── Expense ──────────────────────────────────────────────
+
+function expenseHTML(t) {
+  const total = t.expenses.reduce((s, e) => {
+    const n = parseInt(e.amount.replace(/[^0-9]/g, ''), 10);
+    return s + (isNaN(n) ? 0 : n);
+  }, 0);
+
+  let h = '<div class="expense-section"><div class="expense-header">';
+  h += '<span class="expense-header-title">💰 花費明細</span>';
+  if (t.expLabel) h += `<span class="expense-header-sub">${esc(t.expLabel)}</span>`;
+  h += '</div><table class="expense-table"><tbody>';
+
+  t.expenses.forEach(e => {
+    h += `<tr>
+      <td>${esc(e.item)}</td>
+      <td class="exp-amt">${esc(e.amount)}</td>
+      <td class="exp-note">${esc(e.note)}</td>
+    </tr>`;
+  });
+
+  if (total > 0) {
+    h += `<tr class="exp-total">
+      <td>合計</td>
+      <td class="exp-amt">${total.toLocaleString()}</td>
+      <td></td>
+    </tr>`;
+  }
+
+  h += '</tbody></table></div>';
+  return h;
+}
+
+// ── Drawer ───────────────────────────────────────────────
+
+function renderDrawer() {
+  const byYear = {};
+  trips.forEach((t, i) => {
+    (byYear[t.year] ??= []).push({ t, i });
+  });
+
+  const thisYear = new Date().getFullYear();
+  const years = Object.keys(byYear).map(Number).sort((a,b) => a-b);
+
+  let html = '';
+  years.forEach(yr => {
+    const collapsed = yr !== thisYear;
+    html += `
+      <div class="year-group">
+        <button class="year-toggle ${collapsed?'collapsed':''}" onclick="toggleYear(this)">
+          <span class="chev">▾</span> ${yr} 年
+        </button>
+        <div class="year-trips" ${collapsed?'style="display:none"':''}>`;
+    byYear[yr].forEach(({t,i}) => {
+      html += `<div class="drawer-item" onclick="openTrip(${i})">${esc(t.title)}</div>`;
+    });
+    html += '</div></div>';
+  });
+
+  document.getElementById('drawerList').innerHTML = html;
+}
+
+function toggleYear(btn) {
+  btn.classList.toggle('collapsed');
+  const list = btn.nextElementSibling;
+  list.style.display = list.style.display === 'none' ? '' : 'none';
+}
+
+function toggleDrawer() {
+  document.getElementById('drawer').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ── Init ─────────────────────────────────────────────────
+
+async function init() {
+  try {
+    const meta = await api('?fields=sheets.properties');
+    const sheetProps = meta.sheets.map(s => s.properties);
+
+    const allRows = await Promise.all(
+      sheetProps.map(p => api(`/values/${encodeURIComponent(p.title)}!A:I`).then(d => d.values || []))
+    );
+
+    trips = sheetProps
+      .map((p, i) => buildTrip(p, allRows[i]))
+      .filter(Boolean)
+      .sort((a,b) => a.start - b.start);
+
+    renderDrawer();
+    goHome();
+  } catch(e) {
+    document.getElementById('content').innerHTML = `
+      <div class="center-msg">
+        <div class="err-icon">⚠️</div>
+        <div class="err-title">載入失敗</div>
+        <div class="err-msg">${esc(e.message)}</div>
+      </div>`;
+  }
+}
+
+init();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "旅行規劃站",
+  "short_name": "旅行",
+  "description": "旅遊行程規劃，隨時查看",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1e40af",
+  "background_color": "#eef2f7",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
