@@ -411,12 +411,12 @@ function buildTrip(props, rows) {
 
   for (const row of rows.slice(1)) {
     if (!row || !row.length) continue;
-    const [dateRaw='', actRaw='', detailRaw='', hotelRaw='', noteRaw=''] = row;
-    const dateCell  = dateRaw.trim();
-    const actCell   = actRaw.trim();
-    const detailCell= detailRaw.trim();
-    const hotelCell = hotelRaw.trim();
-    const noteCell  = noteRaw.trim();
+    const [dateRaw='', actRaw='', detailRaw='', hotelRaw='', hotelUrlRaw=''] = row;
+    const dateCell    = dateRaw.trim();
+    const actCell     = actRaw.trim();
+    const detailCell  = detailRaw.trim();
+    const hotelCell   = hotelRaw.trim();
+    const hotelUrlCell= hotelUrlRaw.trim();
 
     const expItem = (row[6] || '').trim();
     const expAmt  = (row[7] || '').trim();
@@ -425,12 +425,13 @@ function buildTrip(props, rows) {
 
     if (dateCell) {
       const imageUrl = (row[9] || '').trim();
-      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, acts: [], imageUrl: imageUrl || null };
+      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl: hotelUrlCell || null, acts: [], imageUrl: imageUrl || null };
       days.push(cur);
-      if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
+      if (actCell) cur.acts.push({ act: actCell, detail: detailCell });
     } else if (cur) {
-      if (hotelCell && !cur.hotel) cur.hotel = hotelCell;
-      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
+      if (hotelCell   && !cur.hotel)    cur.hotel    = hotelCell;
+      if (hotelUrlCell && !cur.hotelUrl) cur.hotelUrl = hotelUrlCell;
+      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell });
     }
   }
 
@@ -584,13 +585,10 @@ function dayHTML(day, n) {
   h += `<span class="day-num">Day ${n}</span>`;
   h += `<span class="day-date">${esc(day.dateLabel)}</span>`;
   if (day.hotel) {
-    const { text: hotelTxt, links: hotelLinks } = extractMaps(day.hotel);
-    const hotelName = hotelTxt || day.hotel;
-    const hotelUrl  = hotelLinks[0];
-    if (hotelUrl) {
-      h += `<a class="day-hotel" href="${esc(hotelUrl)}" target="_blank">🏨 ${esc(hotelName)}<span class="hotel-link-icon">↗</span></a>`;
+    if (day.hotelUrl) {
+      h += `<a class="day-hotel" href="${esc(day.hotelUrl)}" target="_blank">🏨 ${esc(day.hotel)}<span class="hotel-link-icon">↗</span></a>`;
     } else {
-      h += `<span class="day-hotel">🏨 ${esc(hotelName)}</span>`;
+      h += `<span class="day-hotel">🏨 ${esc(day.hotel)}</span>`;
     }
   }
   h += '</div><div class="day-body">';
@@ -603,11 +601,9 @@ function dayHTML(day, n) {
       h += '<div class="act-row">';
       const { text: actTxt, links: actLinks } = extractMaps(a.act);
       const { text: detTxt, links: detLinks } = extractMaps(a.detail);
-      const { text: noteTxt, links: noteLinks } = extractMaps(a.note);
       if (actTxt)  h += `<div class="act-main">${esc(actTxt)}</div>`;
       if (detTxt)  h += `<div class="act-detail">${esc(detTxt)}</div>`;
-      if (noteTxt) h += `<div class="act-note">💬 ${esc(noteTxt)}</div>`;
-      [...actLinks, ...detLinks, ...noteLinks].forEach(url => {
+      [...actLinks, ...detLinks].forEach(url => {
         h += `<a class="map-btn" href="${esc(url)}" target="_blank">📍 地圖</a>`;
       });
       h += '</div>';
