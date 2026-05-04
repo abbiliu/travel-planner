@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>旅行規劃站</title>
   <link rel="manifest" href="manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="旅行規劃站">
@@ -292,6 +293,52 @@
     }
     .map-btn:active { background: #dbeafe; }
 
+    /* ── Gmail Button ── */
+    .gmail-btn { position: relative; font-size: 19px; }
+    .gmail-dot {
+      position: absolute; top: 1px; right: 1px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #64748b;
+      border: 1.5px solid #1e40af;
+      transition: background 0.2s;
+    }
+    .gmail-dot.on { background: #4ade80; }
+
+    /* ── Orders Section ── */
+    .orders-section {
+      margin: 4px 16px 28px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .orders-header {
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 15px; font-weight: 700; color: #374151;
+    }
+    .orders-state {
+      padding: 18px 14px;
+      text-align: center; color: #94a3b8; font-size: 14px;
+    }
+    .orders-connect-btn {
+      display: inline-block; margin-top: 10px;
+      padding: 8px 20px;
+      background: #1e40af; color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 14px; cursor: pointer;
+    }
+    .orders-connect-btn:active { background: #1d4ed8; }
+    .email-card { padding: 10px 14px; border-top: 1px solid #f1f5f9; }
+    .email-card:first-child { border-top: none; }
+    .email-card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+    .email-subject { font-size: 14px; font-weight: 600; color: #1e293b; flex: 1; min-width: 0;
+      overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .email-date { font-size: 12px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
+    .email-from { font-size: 12px; color: #64748b; margin-bottom: 2px; }
+    .email-snippet { font-size: 12px; color: #94a3b8; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+
     /* ── Card Thumbnail ── */
     .trip-card-body { display: flex; align-items: center; gap: 12px; }
     .trip-card-text { flex: 1; min-width: 0; }
@@ -367,6 +414,9 @@
       <span>‹</span><span class="back-btn-text">返回</span>
     </button>
     <span class="header-title" id="headerTitle">✈️ 旅行規劃站</span>
+    <button class="icon-btn gmail-btn" id="gmailBtn" onclick="toggleGmail()" title="連結 Gmail 查看訂單" style="display:none">
+      📧<span class="gmail-dot" id="gmailDot"></span>
+    </button>
   </div>
 
   <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
@@ -384,6 +434,128 @@
 
 </div>
 <script>
+// ── Gmail OAuth ──────────────────────────────────────────
+const CLIENT_ID  = '620169864836-55oo9mnt42lirj233i4fkrcnssmc9kbu.apps.googleusercontent.com';
+const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+const GMAIL_BASE  = 'https://gmail.googleapis.com/gmail/v1/users/me';
+
+let gToken       = null;
+let tokenClient  = null;
+let gmailLabels  = null;
+let currentTripIdx = null;
+
+function tryInitGmail() {
+  if (window.google?.accounts?.oauth2) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: GMAIL_SCOPE,
+      callback: async (resp) => {
+        if (resp.error) { console.error('OAuth error', resp); return; }
+        gToken = resp.access_token;
+        gmailLabels = null;
+        updateGmailBtn(true);
+        if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
+      }
+    });
+    document.getElementById('gmailBtn').style.display = '';
+    updateGmailBtn(false);
+  } else {
+    setTimeout(tryInitGmail, 200);
+  }
+}
+
+function toggleGmail() {
+  if (gToken) {
+    google.accounts.oauth2.revoke(gToken, () => {});
+    gToken = null; gmailLabels = null;
+    updateGmailBtn(false);
+    const el = document.getElementById('trip-orders');
+    if (el) el.innerHTML = ordersDisconnectedHTML();
+  } else {
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
+}
+
+function updateGmailBtn(on) {
+  const btn = document.getElementById('gmailBtn');
+  if (!btn) return;
+  btn.title = on ? '已連結 Gmail（點擊斷開）' : '連結 Gmail 查看訂單';
+  document.getElementById('gmailDot').classList.toggle('on', on);
+}
+
+async function gmailGet(path) {
+  const r = await fetch(`${GMAIL_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${gToken}` }
+  });
+  if (r.status === 401) { gToken = null; updateGmailBtn(false); throw new Error('Token 過期，請重新連線'); }
+  if (!r.ok) throw new Error(`Gmail API ${r.status}`);
+  return r.json();
+}
+
+async function getLabelId(tripName) {
+  if (!gmailLabels) {
+    const data = await gmailGet('/labels');
+    gmailLabels = data.labels || [];
+  }
+  return gmailLabels.find(l => l.name === `旅行/${tripName}`)?.id || null;
+}
+
+function getHeader(msg, name) {
+  return msg.payload?.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+}
+
+function emailCardHTML(msg) {
+  const subject  = getHeader(msg, 'Subject') || '（無主旨）';
+  const from     = getHeader(msg, 'From');
+  const dateRaw  = getHeader(msg, 'Date');
+  const snippet  = msg.snippet || '';
+  const d = new Date(dateRaw);
+  const dateStr  = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
+  const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim() || from;
+  return `
+    <div class="email-card">
+      <div class="email-card-head">
+        <span class="email-subject">${esc(subject)}</span>
+        <span class="email-date">${esc(dateStr)}</span>
+      </div>
+      <div class="email-from">${esc(fromName)}</div>
+      <div class="email-snippet">${esc(snippet)}</div>
+    </div>`;
+}
+
+function ordersDisconnectedHTML() {
+  return `<div class="orders-state">連結 Gmail 可自動顯示此行程的相關訂單信件<br>
+    <button class="orders-connect-btn" onclick="toggleGmail()">連結 Gmail</button></div>`;
+}
+
+async function loadTripOrders(idx) {
+  const t  = trips[idx];
+  const el = document.getElementById('trip-orders');
+  if (!el || !gToken) return;
+  el.innerHTML = '<div class="orders-state">載入信件中⋯</div>';
+  try {
+    const labelId = await getLabelId(t.name);
+    if (!labelId) {
+      el.innerHTML = `<div class="orders-state">未找到 Gmail 標籤「旅行/${esc(t.name)}」</div>`;
+      return;
+    }
+    const data = await gmailGet(`/messages?labelIds=${labelId}&maxResults=20`);
+    if (!data.messages?.length) {
+      el.innerHTML = '<div class="orders-state">此標籤下目前無信件</div>';
+      return;
+    }
+    const details = await Promise.all(
+      data.messages.slice(0, 15).map(m =>
+        gmailGet(`/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`)
+      )
+    );
+    el.innerHTML = details.map(emailCardHTML).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="orders-state" style="color:#ef4444">載入失敗：${esc(e.message)}</div>`;
+  }
+}
+
+// ── Sheets ───────────────────────────────────────────────
 const SHEET_ID = '1GTnDgfwZVAvEYySHPf8Kzo2pBv4T-81zfBPDU22aQe4';
 const API_KEY  = 'AIzaSyDQFgP6nnZv8-adBS8SKOSSJhme4mIIAoU';
 const BASE     = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -543,6 +715,7 @@ function esc(s) {
 // ── Home ─────────────────────────────────────────────────
 
 function goHome() {
+  currentTripIdx = null;
   if (!shareMode) document.getElementById('menuBtn').style.display = '';
   document.getElementById('backBtn').style.display = 'none';
   document.getElementById('headerTitle').textContent = '✈️ 旅行規劃站';
@@ -625,7 +798,14 @@ function openTrip(idx) {
   html += '</div>';
   if (t.expenses.length) html += expenseHTML(t);
 
+  html += `<div class="orders-section">
+    <div class="orders-header">📧 相關訂單信件</div>
+    <div id="trip-orders">${gToken ? '' : ordersDisconnectedHTML()}</div>
+  </div>`;
+
+  currentTripIdx = idx;
   setContent(html);
+  if (gToken) loadTripOrders(idx);
 }
 
 function dayHTML(day, n) {
@@ -793,6 +973,7 @@ async function init() {
     }
 
     goHome();
+    if (!shareMode) tryInitGmail();
   } catch(e) {
     document.getElementById('content').innerHTML = `
       <div class="center-msg">
