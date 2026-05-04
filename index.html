@@ -515,15 +515,14 @@ async function getLabelId(tripName) {
   const yymm = tripName.match(/^(\d{4})/)?.[1];
   if (!yymm) return null;
 
-  // 先找 旅行/YYMM，找不到再找無前綴的 YYMM 開頭 label
-  let candidates = gmailLabels.filter(l =>
-    l.name.startsWith('旅行/') && l.name.replace('旅行/', '').startsWith(yymm)
-  );
-  if (!candidates.length) {
-    candidates = gmailLabels.filter(l =>
-      !l.name.startsWith('CATEGORY_') && l.name.startsWith(yymm)
-    );
+  // 支援三種格式：旅行/YYMM、YYYY/YYMM、純 YYMM 開頭
+  function labelYymm(name) {
+    return (name.match(/(?:^|\/)(\d{4})\s/) || [])[1] || '';
   }
+  let candidates = gmailLabels.filter(l =>
+    !l.name.startsWith('CATEGORY_') && !l.name.startsWith('CHAT') &&
+    labelYymm(l.name) === yymm
+  );
   if (!candidates.length) return null;
   if (candidates.length === 1) return candidates[0].id;
 
@@ -531,7 +530,7 @@ async function getLabelId(tripName) {
   const tripTitle = tripName.replace('_', ' ').slice(4).trim();
   let best = candidates[0], bestScore = -1;
   for (const c of candidates) {
-    const labelTitle = c.name.replace(/^旅行\//, '').replace(/^\d{4}\s*/, '');
+    const labelTitle = c.name.replace(/^.*\/\d{4}\s*/, '');
     const score = charOverlap(tripTitle, labelTitle);
     if (score > bestScore) { bestScore = score; best = c; }
   }
@@ -576,8 +575,8 @@ async function loadTripOrders(idx) {
     if (!labelId) {
       const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
       const found = (gmailLabels || [])
-        .filter(l => !l.name.startsWith('CATEGORY_') && !l.name.startsWith('CHAT'))
-        .filter(l => yymm ? (l.name.includes(yymm) || l.name.startsWith('旅行/')) : l.name.startsWith('旅行/'))
+        .filter(l => !l.name.startsWith('CATEGORY_') && !l.name.startsWith('CHAT') && !['INBOX','SENT','DRAFT','TRASH','SPAM','STARRED','IMPORTANT','UNREAD'].includes(l.name))
+        .filter(l => !yymm || l.name.includes(yymm))
         .map(l => l.name).join('、');
       el.innerHTML = `<div class="orders-state">找不到對應的 Gmail 標籤<br>
         <small style="color:#64748b;font-size:11px;line-height:1.6">
