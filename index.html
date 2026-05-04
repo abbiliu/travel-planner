@@ -512,14 +512,18 @@ async function getLabelId(tripName) {
   }
 
   // 自動模糊比對
-  const travelLabels = gmailLabels.filter(l => l.name.startsWith('旅行/'));
   const yymm = tripName.match(/^(\d{4})/)?.[1];
   if (!yymm) return null;
 
-  // 同 YYMM 的候選 label
-  const candidates = travelLabels.filter(l =>
-    l.name.replace('旅行/', '').startsWith(yymm)
+  // 先找 旅行/YYMM，找不到再找無前綴的 YYMM 開頭 label
+  let candidates = gmailLabels.filter(l =>
+    l.name.startsWith('旅行/') && l.name.replace('旅行/', '').startsWith(yymm)
   );
+  if (!candidates.length) {
+    candidates = gmailLabels.filter(l =>
+      !l.name.startsWith('CATEGORY_') && l.name.startsWith(yymm)
+    );
+  }
   if (!candidates.length) return null;
   if (candidates.length === 1) return candidates[0].id;
 
@@ -527,7 +531,7 @@ async function getLabelId(tripName) {
   const tripTitle = tripName.replace('_', ' ').slice(4).trim();
   let best = candidates[0], bestScore = -1;
   for (const c of candidates) {
-    const labelTitle = c.name.replace(/^旅行\/\d{4}\s*/, '');
+    const labelTitle = c.name.replace(/^旅行\//, '').replace(/^\d{4}\s*/, '');
     const score = charOverlap(tripTitle, labelTitle);
     if (score > bestScore) { bestScore = score; best = c; }
   }
@@ -570,7 +574,15 @@ async function loadTripOrders(idx) {
   try {
     const labelId = await getLabelId(t.name);
     if (!labelId) {
-      el.innerHTML = `<div class="orders-state">未找到 Gmail 標籤「旅行/${esc(t.name)}」</div>`;
+      const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
+      const found = (gmailLabels || [])
+        .filter(l => !l.name.startsWith('CATEGORY_') && !l.name.startsWith('CHAT'))
+        .filter(l => yymm ? (l.name.includes(yymm) || l.name.startsWith('旅行/')) : l.name.startsWith('旅行/'))
+        .map(l => l.name).join('、');
+      el.innerHTML = `<div class="orders-state">找不到對應的 Gmail 標籤<br>
+        <small style="color:#64748b;font-size:11px;line-height:1.6">
+          找到的相關標籤：${found ? esc(found) : '（無）'}
+        </small></div>`;
       return;
     }
     const data = await gmailGet(`/messages?labelIds=${labelId}&maxResults=20`);
