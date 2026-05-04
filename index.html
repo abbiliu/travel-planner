@@ -292,6 +292,24 @@
     }
     .map-btn:active { background: #dbeafe; }
 
+    /* ── Card Thumbnail ── */
+    .trip-card-body { display: flex; align-items: center; gap: 12px; }
+    .trip-card-text { flex: 1; min-width: 0; }
+    .trip-card-thumb {
+      width: 72px; height: 72px;
+      border-radius: 10px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .trip-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ── Page Transition ── */
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .page-anim { animation: pageIn 0.22s ease; }
+
     /* ── Loading / Error ── */
     .center-msg {
       padding: 64px 24px;
@@ -396,6 +414,13 @@ function parseDateLabel(label, year) {
   return new Date(year, +m[1] - 1, +m[2]);
 }
 
+function formatDateLabel(date) {
+  const days = ['日','一','二','三','四','五','六'];
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${mm}/${dd} 週${days[date.getDay()]}`;
+}
+
 function extractMaps(text) {
   const re = /https?:\/\/(?:www\.)?(?:maps\.google\.com|google\.com\/maps|goo\.gl\/maps|maps\.app\.goo\.gl)\S*/g;
   const links = [...text.matchAll(re)].map(m => m[0]);
@@ -431,7 +456,9 @@ function buildTrip(props, rows) {
       const imageUrl = (row[9] || '').trim();
       const hotelUrl = hotelCell ? col5Cell || null : null;
       const noteCell = hotelCell ? '' : col5Cell;
-      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl, acts: [], imageUrl: imageUrl || null };
+      const parsedDate = parseDateLabel(dateCell, year);
+      const dateLabel = parsedDate ? formatDateLabel(parsedDate) : dateCell;
+      cur = { dateLabel, date: parsedDate, hotel: hotelCell || null, hotelUrl, acts: [], imageUrl: imageUrl || null };
       days.push(cur);
       if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
     } else if (cur) {
@@ -455,7 +482,8 @@ function buildTrip(props, rows) {
     ? `${year}/${fmt(start)}`
     : `${year}/${fmt(start)} ～ ${fmt(end)}`;
 
-  return { name: props.title, title, year, month, status, range, start, end, days, expenses, expLabel };
+  const thumbUrl = validDays[0]?.imageUrl || null;
+  return { name: props.title, title, year, month, status, range, start, end, days, expenses, expLabel, thumbUrl };
 }
 
 // ── Render helpers ───────────────────────────────────────
@@ -541,21 +569,35 @@ function goHome() {
   }
 
   html += '</div>';
-  document.getElementById('content').innerHTML = html;
-  window.scrollTo(0,0);
+  setContent(html);
 }
+
+function setContent(html) {
+  const el = document.getElementById('content');
+  el.classList.remove('page-anim');
+  el.innerHTML = html;
+  void el.offsetWidth;
+  el.classList.add('page-anim');
+  window.scrollTo(0, 0);
+}
+
+const SCENE_IMGS = ['./scene_01.png', './scene_02.png', './scene_03.png'];
 
 function cardHTML(t) {
   const idx = trips.indexOf(t);
   const flag = getFlag(t.title);
   const countdown = getCountdown(t);
   const cdHTML = countdown ? `<span class="countdown">${countdown}</span>` : '';
+  const thumb = t.thumbUrl || SCENE_IMGS[idx % 3];
   return `
     <div class="trip-card ${t.status === 'ongoing' ? 'ongoing' : t.status === 'done' ? 'done' : ''}" onclick="openTrip(${idx})">
       <div class="trip-card-body">
-        <div class="trip-card-title">${flag} ${esc(t.title)}</div>
-        <div class="trip-card-dates">${esc(t.range)}</div>
-        ${badge(t.status)}${cdHTML}
+        <div class="trip-card-text">
+          <div class="trip-card-title">${flag} ${esc(t.title)}</div>
+          <div class="trip-card-dates">${esc(t.range)}</div>
+          ${badge(t.status)}${cdHTML}
+        </div>
+        <div class="trip-card-thumb"><img src="${esc(thumb)}" alt="" loading="lazy"></div>
       </div>
     </div>`;
 }
@@ -583,8 +625,7 @@ function openTrip(idx) {
   html += '</div>';
   if (t.expenses.length) html += expenseHTML(t);
 
-  document.getElementById('content').innerHTML = html;
-  window.scrollTo(0,0);
+  setContent(html);
 }
 
 function dayHTML(day, n) {
