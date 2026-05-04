@@ -411,12 +411,12 @@ function buildTrip(props, rows) {
 
   for (const row of rows.slice(1)) {
     if (!row || !row.length) continue;
-    const [dateRaw='', actRaw='', detailRaw='', hotelRaw='', hotelUrlRaw=''] = row;
-    const dateCell    = dateRaw.trim();
-    const actCell     = actRaw.trim();
-    const detailCell  = detailRaw.trim();
-    const hotelCell   = hotelRaw.trim();
-    const hotelUrlCell= hotelUrlRaw.trim();
+    const [dateRaw='', actRaw='', detailRaw='', hotelRaw='', col5Raw=''] = row;
+    const dateCell   = dateRaw.trim();
+    const actCell    = actRaw.trim();
+    const detailCell = detailRaw.trim();
+    const hotelCell  = hotelRaw.trim();
+    const col5Cell   = col5Raw.trim();
 
     const expItem = (row[6] || '').trim();
     const expAmt  = (row[7] || '').trim();
@@ -424,16 +424,15 @@ function buildTrip(props, rows) {
     if (expItem) expenses.push({ item: expItem, amount: expAmt, note: expNote });
 
     if (dateCell) {
+      // E 欄 = 飯店 Maps URL（僅日期行）
       const imageUrl = (row[9] || '').trim();
-      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl: hotelCell ? hotelUrlCell || null : null, acts: [], imageUrl: imageUrl || null };
+      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl: hotelCell ? col5Cell || null : null, acts: [], imageUrl: imageUrl || null };
       days.push(cur);
-      if (actCell) cur.acts.push({ act: actCell, detail: detailCell });
+      if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: '' });
     } else if (cur) {
-      if (hotelCell && !cur.hotel) {
-        cur.hotel    = hotelCell;
-        cur.hotelUrl = hotelUrlCell || null;
-      }
-      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell });
+      // E 欄 = 行程備註（續行）
+      if (hotelCell && !cur.hotel) cur.hotel = hotelCell;
+      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell, note: col5Cell });
     }
   }
 
@@ -603,9 +602,11 @@ function dayHTML(day, n) {
       h += '<div class="act-row">';
       const { text: actTxt, links: actLinks } = extractMaps(a.act);
       const { text: detTxt, links: detLinks } = extractMaps(a.detail);
+      const { text: noteTxt, links: noteLinks } = extractMaps(a.note || '');
       if (actTxt)  h += `<div class="act-main">${esc(actTxt)}</div>`;
       if (detTxt)  h += `<div class="act-detail">${esc(detTxt)}</div>`;
-      [...actLinks, ...detLinks].forEach(url => {
+      if (noteTxt) h += `<div class="act-note">💬 ${esc(noteTxt)}</div>`;
+      [...actLinks, ...detLinks, ...noteLinks].forEach(url => {
         h += `<a class="map-btn" href="${esc(url)}" target="_blank">📍 地圖</a>`;
       });
       h += '</div>';
