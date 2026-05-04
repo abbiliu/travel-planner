@@ -424,15 +424,19 @@ function buildTrip(props, rows) {
     if (expItem) expenses.push({ item: expItem, amount: expAmt, note: expNote });
 
     if (dateCell) {
-      // E 欄 = 飯店 Maps URL（僅日期行）
       const imageUrl = (row[9] || '').trim();
-      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl: hotelCell ? col5Cell || null : null, acts: [], imageUrl: imageUrl || null };
+      const hotelUrl = hotelCell ? col5Cell || null : null;
+      const noteCell = hotelCell ? '' : col5Cell;
+      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl, acts: [], imageUrl: imageUrl || null };
       days.push(cur);
-      if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: '' });
+      if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
     } else if (cur) {
-      // E 欄 = 行程備註（續行）
-      if (hotelCell && !cur.hotel) cur.hotel = hotelCell;
-      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell, note: col5Cell });
+      if (hotelCell && !cur.hotel) {
+        cur.hotel    = hotelCell;
+        cur.hotelUrl = col5Cell || null;
+      }
+      const noteCell = hotelCell ? '' : col5Cell;
+      if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
     }
   }
 
