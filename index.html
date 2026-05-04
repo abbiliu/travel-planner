@@ -384,7 +384,7 @@ function parseDateLabel(label, year) {
 }
 
 function extractMaps(text) {
-  const re = /https?:\/\/(maps\.google\.com|goo\.gl\/maps|maps\.app\.goo\.gl)\S*/g;
+  const re = /https?:\/\/(?:www\.)?(?:maps\.google\.com|google\.com\/maps|goo\.gl\/maps|maps\.app\.goo\.gl)\S*/g;
   const links = [...text.matchAll(re)].map(m => m[0]);
   return { text: text.replace(re, '').trim(), links };
 }
@@ -585,10 +585,11 @@ function dayHTML(day, n) {
       h += '<div class="act-row">';
       const { text: actTxt, links: actLinks } = extractMaps(a.act);
       const { text: detTxt, links: detLinks } = extractMaps(a.detail);
+      const { text: noteTxt, links: noteLinks } = extractMaps(a.note);
       if (actTxt)  h += `<div class="act-main">${esc(actTxt)}</div>`;
       if (detTxt)  h += `<div class="act-detail">${esc(detTxt)}</div>`;
-      if (a.note)  h += `<div class="act-note">💬 ${esc(a.note)}</div>`;
-      [...actLinks, ...detLinks].forEach(url => {
+      if (noteTxt) h += `<div class="act-note">💬 ${esc(noteTxt)}</div>`;
+      [...actLinks, ...detLinks, ...noteLinks].forEach(url => {
         h += `<a class="map-btn" href="${esc(url)}" target="_blank">📍 地圖</a>`;
       });
       h += '</div>';
