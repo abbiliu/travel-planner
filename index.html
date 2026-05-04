@@ -442,6 +442,7 @@ const GMAIL_BASE  = 'https://gmail.googleapis.com/gmail/v1/users/me';
 let gToken       = null;
 let tokenClient  = null;
 let gmailLabels  = null;
+let labelConfig  = {};
 let currentTripIdx = null;
 
 function tryInitGmail() {
@@ -492,12 +493,45 @@ async function gmailGet(path) {
   return r.json();
 }
 
+function charOverlap(a, b) {
+  let n = 0;
+  for (const ch of a) if (b.includes(ch)) n++;
+  return n;
+}
+
 async function getLabelId(tripName) {
   if (!gmailLabels) {
     const data = await gmailGet('/labels');
     gmailLabels = data.labels || [];
   }
-  return gmailLabels.find(l => l.name === `旅行/${tripName}`)?.id || null;
+
+  // _config 手動覆蓋
+  const override = labelConfig[tripName];
+  if (override) {
+    return gmailLabels.find(l => l.name === `旅行/${override}`)?.id || null;
+  }
+
+  // 自動模糊比對
+  const travelLabels = gmailLabels.filter(l => l.name.startsWith('旅行/'));
+  const yymm = tripName.match(/^(\d{4})/)?.[1];
+  if (!yymm) return null;
+
+  // 同 YYMM 的候選 label
+  const candidates = travelLabels.filter(l =>
+    l.name.replace('旅行/', '').startsWith(yymm)
+  );
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0].id;
+
+  // 多個候選：取字元重疊最高的
+  const tripTitle = tripName.replace('_', ' ').slice(4).trim();
+  let best = candidates[0], bestScore = -1;
+  for (const c of candidates) {
+    const labelTitle = c.name.replace(/^旅行\/\d{4}\s*/, '');
+    const score = charOverlap(tripTitle, labelTitle);
+    if (score > bestScore) { bestScore = score; best = c; }
+  }
+  return best.id;
 }
 
 function getHeader(msg, name) {
@@ -934,7 +968,16 @@ async function init() {
     const meta = await api('?fields=sheets.properties');
     const allSheetProps = meta.sheets.map(s => s.properties);
     const sharesProps = allSheetProps.find(p => p.title === '_shares');
-    const sheetProps = allSheetProps.filter(p => !p.title.startsWith('_'));
+    const configProps = allSheetProps.find(p => p.title === '_config');
+    const sheetProps  = allSheetProps.filter(p => !p.title.startsWith('_'));
+
+    if (configProps) {
+      const cfgData = await api(`/values/${encodeURIComponent('_config')}!A:B`);
+      for (const row of cfgData.values || []) {
+        const sn = (row[0] || '').trim(), gl = (row[1] || '').trim();
+        if (sn && gl) labelConfig[sn] = gl;
+      }
+    }
 
     let shareConfig = null;
     if (shareId && sharesProps) {
