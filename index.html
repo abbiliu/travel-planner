@@ -569,16 +569,34 @@ async function loadTripOrders(idx) {
   if (!el || !gToken) return;
   el.innerHTML = '<div class="orders-state">載入信件中⋯</div>';
   try {
-    const labelId = await getLabelId(t.name);
+    // 確保 gmailLabels 已載入
+    if (!gmailLabels) {
+      const data = await gmailGet('/labels');
+      gmailLabels = data.labels || [];
+    }
+    const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
+    const SYSTEM = new Set(['INBOX','SENT','DRAFT','TRASH','SPAM','STARRED','IMPORTANT','UNREAD','CHAT']);
+    const userLabels = gmailLabels.filter(l => !l.name.startsWith('CATEGORY_') && !SYSTEM.has(l.name));
+    const allNames   = userLabels.map(l => l.name);
+    const candidates = userLabels.filter(l => l.name.split('/').pop().startsWith(yymm));
+
+    const labelId = candidates.length === 1 ? candidates[0].id
+      : candidates.length > 1 ? (() => {
+          const tripTitle = t.name.replace('_',' ').slice(4).trim();
+          let best = candidates[0], bestScore = -1;
+          for (const c of candidates) {
+            const s = charOverlap(tripTitle, c.name.split('/').pop().replace(/^\d{4}\s*/,''));
+            if (s > bestScore) { bestScore = s; best = c; }
+          }
+          return best.id;
+        })() : null;
+
     if (!labelId) {
-      const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
-      const found = (gmailLabels || [])
-        .filter(l => !l.name.startsWith('CATEGORY_') && !l.name.startsWith('CHAT') && !['INBOX','SENT','DRAFT','TRASH','SPAM','STARRED','IMPORTANT','UNREAD'].includes(l.name))
-        .filter(l => !yymm || l.name.includes(yymm))
-        .map(l => l.name).join('、');
-      el.innerHTML = `<div class="orders-state">找不到對應的 Gmail 標籤<br>
-        <small style="color:#64748b;font-size:11px;line-height:1.6">
-          找到的相關標籤：${found ? esc(found) : '（無）'}
+      el.innerHTML = `<div class="orders-state" style="text-align:left;padding:14px">
+        <b>找不到對應標籤</b><br>
+        <small style="color:#64748b;font-size:11px;line-height:1.8;display:block;margin-top:6px">
+          找 YYMM：<b>${esc(yymm)}</b><br>
+          全部標籤 (${allNames.length})：${esc(allNames.join(' | ') || '（無）')}
         </small></div>`;
       return;
     }
