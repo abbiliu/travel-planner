@@ -1,5 +1,12 @@
-const CACHE = 'travel-v2';
-const SHELL = ['./index.html', './icon.svg', './manifest.json'];
+const CACHE = 'travel-v3';
+const SHELL = [
+  './index.html',
+  './icon.svg',
+  './manifest.json',
+  './scene_01.png',
+  './scene_02.png',
+  './scene_03.png',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)));
@@ -16,19 +23,28 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.url.includes('sheets.googleapis.com')) {
-    // Google Sheets: network first, 離線時用上次快取
+  const url = e.request.url;
+
+  // APIs: network first, 離線時用快取
+  if (url.includes('googleapis.com') || url.includes('accounts.google.com')) {
     e.respondWith(
       fetch(e.request)
-        .then(r => {
-          const clone = r.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-          return r;
-        })
+        .then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r; })
         .catch(() => caches.match(e.request))
     );
     return;
   }
-  // App shell: cache first
+
+  // index.html: network first，確保每次都拿最新版
+  if (url.endsWith('/') || url.includes('index.html') || !url.includes('.')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r; })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // 其他靜態資源: cache first
   e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
