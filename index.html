@@ -686,7 +686,9 @@ async function init() {
 
     if (shareConfig) {
       shareMode = true;
-      trips = trips.filter(t => shareConfig.sheetNames.includes(t.name));
+      if (!shareConfig.sheetNames.includes('all')) {
+        trips = trips.filter(t => shareConfig.sheetNames.includes(t.name));
+      }
       const label = shareConfig.displayName || '旅行行程';
       document.title = label;
       document.getElementById('headerTitle').textContent = `✈️ ${label}`;
