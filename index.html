@@ -246,11 +246,20 @@
       background: rgba(255,255,255,0.18);
       padding: 2px 8px;
       border-radius: 10px;
-      max-width: 130px;
+      max-width: 140px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 3px;
     }
+    a.day-hotel {
+      color: #fff;
+      text-decoration: none;
+    }
+    a.day-hotel:active { background: rgba(255,255,255,0.3); }
+    .hotel-link-icon { font-size: 10px; opacity: 0.75; flex-shrink: 0; }
 
     .day-body { padding: 10px 14px; }
 
@@ -574,7 +583,16 @@ function dayHTML(day, n) {
   h += '<div class="day-header">';
   h += `<span class="day-num">Day ${n}</span>`;
   h += `<span class="day-date">${esc(day.dateLabel)}</span>`;
-  if (day.hotel) h += `<span class="day-hotel">🏨 ${esc(day.hotel)}</span>`;
+  if (day.hotel) {
+    const { text: hotelTxt, links: hotelLinks } = extractMaps(day.hotel);
+    const hotelName = hotelTxt || day.hotel;
+    const hotelUrl  = hotelLinks[0];
+    if (hotelUrl) {
+      h += `<a class="day-hotel" href="${esc(hotelUrl)}" target="_blank">🏨 ${esc(hotelName)}<span class="hotel-link-icon">↗</span></a>`;
+    } else {
+      h += `<span class="day-hotel">🏨 ${esc(hotelName)}</span>`;
+    }
+  }
   h += '</div><div class="day-body">';
 
   if (!day.acts.length) {
