@@ -425,12 +425,14 @@ function buildTrip(props, rows) {
 
     if (dateCell) {
       const imageUrl = (row[9] || '').trim();
-      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl: hotelUrlCell || null, acts: [], imageUrl: imageUrl || null };
+      cur = { dateLabel: dateCell, date: parseDateLabel(dateCell, year), hotel: hotelCell || null, hotelUrl: hotelCell ? hotelUrlCell || null : null, acts: [], imageUrl: imageUrl || null };
       days.push(cur);
       if (actCell) cur.acts.push({ act: actCell, detail: detailCell });
     } else if (cur) {
-      if (hotelCell   && !cur.hotel)    cur.hotel    = hotelCell;
-      if (hotelUrlCell && !cur.hotelUrl) cur.hotelUrl = hotelUrlCell;
+      if (hotelCell && !cur.hotel) {
+        cur.hotel    = hotelCell;
+        cur.hotelUrl = hotelUrlCell || null;
+      }
       if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell });
     }
   }
