@@ -126,6 +126,9 @@
       transition: background 0.15s;
     }
     .drawer-item:hover { background: #eff6ff; border-left-color: #3b82f6; color: #1d4ed8; }
+    .drawer-item-done { color: #94a3b8; }
+    .drawer-item-done:hover { color: #64748b; }
+    .done-tag { font-size: 11px; color: #cbd5e1; margin-left: 3px; }
 
     /* ── Pages ── */
     .page { padding: 16px; }
@@ -172,6 +175,15 @@
       background: #f0fdf4;
       border-color: #86efac;
     }
+
+    .trip-card.done {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+      box-shadow: none;
+      opacity: 0.72;
+    }
+    .trip-card.done .trip-card-title { color: #94a3b8; }
+    .trip-card.done .trip-card-dates { color: #cbd5e1; }
 
     .countdown {
       font-size: 13px;
@@ -483,7 +495,8 @@ function goHome() {
 
   const thisYear = new Date().getFullYear();
   const active = trips.filter(t => t.year === thisYear && t.status !== 'done');
-  const rest   = trips.filter(t => !(t.year === thisYear && t.status !== 'done'));
+  const other  = trips.filter(t => t.year !== thisYear && t.status !== 'done');
+  const done   = trips.filter(t => t.status === 'done');
 
   let html = '<div class="page">';
 
@@ -491,9 +504,13 @@ function goHome() {
     html += '<div class="section-label">即將出發</div>';
     active.forEach(t => { html += cardHTML(t); });
   }
-  if (rest.length) {
+  if (other.length) {
     html += `<div class="section-label">${active.length ? '其他行程' : '所有行程'}</div>`;
-    rest.forEach(t => { html += cardHTML(t); });
+    other.forEach(t => { html += cardHTML(t); });
+  }
+  if (done.length) {
+    html += '<div class="section-label">已結束</div>';
+    done.forEach(t => { html += cardHTML(t); });
   }
 
   html += '</div>';
@@ -507,7 +524,7 @@ function cardHTML(t) {
   const countdown = getCountdown(t);
   const cdHTML = countdown ? `<span class="countdown">${countdown}</span>` : '';
   return `
-    <div class="trip-card ${t.status === 'ongoing' ? 'ongoing' : ''}" onclick="openTrip(${idx})">
+    <div class="trip-card ${t.status === 'ongoing' ? 'ongoing' : t.status === 'done' ? 'done' : ''}" onclick="openTrip(${idx})">
       <div class="trip-card-body">
         <div class="trip-card-title">${flag} ${esc(t.title)}</div>
         <div class="trip-card-dates">${esc(t.range)}</div>
@@ -626,7 +643,8 @@ function renderDrawer() {
         </button>
         <div class="year-trips" ${collapsed?'style="display:none"':''}>`;
     byYear[yr].forEach(({t,i}) => {
-      html += `<div class="drawer-item" onclick="openTrip(${i})">${esc(t.title)}</div>`;
+      const isDone = t.status === 'done';
+      html += `<div class="drawer-item${isDone ? ' drawer-item-done' : ''}" onclick="openTrip(${i})">${esc(t.title)}${isDone ? '<span class="done-tag">（已結束）</span>' : ''}</div>`;
     });
     html += '</div></div>';
   });
