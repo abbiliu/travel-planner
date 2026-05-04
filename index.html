@@ -339,6 +339,7 @@ const API_KEY  = 'AIzaSyDQFgP6nnZv8-adBS8SKOSSJhme4mIIAoU';
 const BASE     = 'https://sheets.googleapis.com/v4/spreadsheets';
 
 let trips = [];
+let shareMode = false;
 
 // ── API ──────────────────────────────────────────────────
 
@@ -475,7 +476,7 @@ function esc(s) {
 // ── Home ─────────────────────────────────────────────────
 
 function goHome() {
-  document.getElementById('menuBtn').style.display = '';
+  if (!shareMode) document.getElementById('menuBtn').style.display = '';
   document.getElementById('backBtn').style.display = 'none';
   document.getElementById('headerTitle').textContent = '✈️ 旅行規劃站';
   closeDrawer();
@@ -653,8 +654,26 @@ function closeDrawer() {
 
 async function init() {
   try {
+    const shareId = new URLSearchParams(location.search).get('share');
+
     const meta = await api('?fields=sheets.properties');
-    const sheetProps = meta.sheets.map(s => s.properties);
+    const allSheetProps = meta.sheets.map(s => s.properties);
+    const sharesProps = allSheetProps.find(p => p.title === '_shares');
+    const sheetProps = allSheetProps.filter(p => !p.title.startsWith('_'));
+
+    let shareConfig = null;
+    if (shareId && sharesProps) {
+      const sharesData = await api(`/values/${encodeURIComponent('_shares')}!A:Z`);
+      for (const row of sharesData.values || []) {
+        if ((row[0] || '').trim() === shareId) {
+          shareConfig = {
+            displayName: (row[1] || '').trim(),
+            sheetNames: (row[2] || '').split('|').map(s => s.trim()).filter(Boolean),
+          };
+          break;
+        }
+      }
+    }
 
     const allRows = await Promise.all(
       sheetProps.map(p => api(`/values/${encodeURIComponent(p.title)}!A:I`).then(d => d.values || []))
@@ -665,7 +684,17 @@ async function init() {
       .filter(Boolean)
       .sort((a,b) => a.start - b.start);
 
-    renderDrawer();
+    if (shareConfig) {
+      shareMode = true;
+      trips = trips.filter(t => shareConfig.sheetNames.includes(t.name));
+      const label = shareConfig.displayName || '旅行行程';
+      document.title = label;
+      document.getElementById('headerTitle').textContent = `✈️ ${label}`;
+      document.getElementById('menuBtn').style.display = 'none';
+    } else {
+      renderDrawer();
+    }
+
     goHome();
   } catch(e) {
     document.getElementById('content').innerHTML = `
