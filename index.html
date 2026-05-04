@@ -515,14 +515,12 @@ async function getLabelId(tripName) {
   const yymm = tripName.match(/^(\d{4})/)?.[1];
   if (!yymm) return null;
 
-  // 支援三種格式：旅行/YYMM、YYYY/YYMM、純 YYMM 開頭
-  function labelYymm(name) {
-    return (name.match(/(?:^|\/)(\d{4})\s/) || [])[1] || '';
-  }
-  let candidates = gmailLabels.filter(l =>
-    !l.name.startsWith('CATEGORY_') && !l.name.startsWith('CHAT') &&
-    labelYymm(l.name) === yymm
-  );
+  const SYSTEM = new Set(['INBOX','SENT','DRAFT','TRASH','SPAM','STARRED','IMPORTANT','UNREAD','CHAT']);
+  // 取 label 最後一段比對 YYMM（支援 旅行/YYMM、YYYY/YYMM、純 YYMM）
+  const candidates = gmailLabels.filter(l => {
+    if (l.name.startsWith('CATEGORY_') || SYSTEM.has(l.name)) return false;
+    return l.name.split('/').pop().startsWith(yymm);
+  });
   if (!candidates.length) return null;
   if (candidates.length === 1) return candidates[0].id;
 
@@ -530,7 +528,7 @@ async function getLabelId(tripName) {
   const tripTitle = tripName.replace('_', ' ').slice(4).trim();
   let best = candidates[0], bestScore = -1;
   for (const c of candidates) {
-    const labelTitle = c.name.replace(/^.*\/\d{4}\s*/, '');
+    const labelTitle = c.name.split('/').pop().replace(/^\d{4}\s*/, '');
     const score = charOverlap(tripTitle, labelTitle);
     if (score > bestScore) { bestScore = score; best = c; }
   }
