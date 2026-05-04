@@ -247,12 +247,16 @@
       padding: 2px 8px;
       border-radius: 10px;
       max-width: 140px;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
       display: flex;
       align-items: center;
       gap: 3px;
+      min-width: 0;
+    }
+    .hotel-name {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
     a.day-hotel {
       color: #fff;
@@ -591,9 +595,9 @@ function dayHTML(day, n) {
   h += `<span class="day-date">${esc(day.dateLabel)}</span>`;
   if (day.hotel) {
     if (day.hotelUrl) {
-      h += `<a class="day-hotel" href="${esc(day.hotelUrl)}" target="_blank">🏨 ${esc(day.hotel)}<span class="hotel-link-icon">↗</span></a>`;
+      h += `<a class="day-hotel" href="${esc(day.hotelUrl)}" target="_blank">🏨 <span class="hotel-name">${esc(day.hotel)}</span><span class="hotel-link-icon">↗</span></a>`;
     } else {
-      h += `<span class="day-hotel">🏨 ${esc(day.hotel)}</span>`;
+      h += `<span class="day-hotel">🏨 <span class="hotel-name">${esc(day.hotel)}</span></span>`;
     }
   }
   h += '</div><div class="day-body">';
