@@ -422,6 +422,28 @@
     <button class="icon-btn gmail-btn" id="gmailBtn" onclick="toggleGmail()" title="連結 Gmail 查看訂單" style="display:none">
       📧<span class="gmail-dot" id="gmailDot"></span>
     </button>
+    <button class="icon-btn" id="settingsBtn" onclick="openSettings()" title="設定">⚙️</button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsOverlay" onclick="if(event.target===this)closeSettings()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:24px;margin:20px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
+      <div style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:6px;">⚙️ 設定</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">AI 摘要功能設定</div>
+
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">OpenAI API Key</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">用於 AI 解析信件內容，存在本裝置，不會上傳。</div>
+      <input id="settingsKeyInput" type="password" placeholder="sk-..."
+        style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:6px;" />
+      <div id="settingsKeyStatus" style="font-size:12px;height:18px;margin-bottom:14px;"></div>
+
+      <div style="display:flex;gap:10px;">
+        <button onclick="saveSettingsKey()"
+          style="flex:1;padding:10px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">儲存</button>
+        <button onclick="closeSettings()"
+          style="flex:1;padding:10px;background:#f1f5f9;color:#374151;border:none;border-radius:10px;font-size:14px;cursor:pointer;">關閉</button>
+      </div>
+    </div>
   </div>
 
   <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
@@ -641,8 +663,38 @@ function saveAIKey() {
   localStorage.setItem('openai_api_key', val);
   const banner = document.querySelector('.ai-key-banner');
   if (banner) banner.remove();
-  // 重新觸發 AI 摘要
   if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
+}
+
+function openSettings() {
+  const overlay = document.getElementById('settingsOverlay');
+  overlay.style.display = 'flex';
+  const input = document.getElementById('settingsKeyInput');
+  const existing = getOpenAIKey();
+  input.value = existing ? existing : '';
+  input.placeholder = existing ? '（已設定，可重新輸入覆蓋）' : 'sk-...';
+  const status = document.getElementById('settingsKeyStatus');
+  status.textContent = existing ? '✅ 已設定 AI Key' : '⚠️ 尚未設定，信件摘要將不顯示';
+  status.style.color = existing ? '#16a34a' : '#f59e0b';
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').style.display = 'none';
+}
+
+function saveSettingsKey() {
+  const val = document.getElementById('settingsKeyInput')?.value?.trim();
+  if (!val) return;
+  localStorage.setItem('openai_api_key', val);
+  const status = document.getElementById('settingsKeyStatus');
+  status.textContent = '✅ 儲存成功';
+  status.style.color = '#16a34a';
+  setTimeout(() => {
+    closeSettings();
+    const banner = document.querySelector('.ai-key-banner');
+    if (banner) banner.remove();
+    if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
+  }, 800);
 }
 
 async function loadTripOrders(idx) {
