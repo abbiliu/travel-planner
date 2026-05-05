@@ -329,15 +329,20 @@
       font-size: 14px; cursor: pointer;
     }
     .orders-connect-btn:active { background: #1d4ed8; }
+    .ai-key-banner { padding: 10px 14px; background: #fffbeb; border-top: 1px solid #fde68a;
+      font-size: 12px; color: #92400e; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ai-key-input { flex: 1; min-width: 160px; padding: 4px 8px; border: 1px solid #fcd34d;
+      border-radius: 6px; font-size: 12px; }
+    .ai-key-save { padding: 4px 10px; background: #f59e0b; color: #fff;
+      border: none; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; }
     .email-card { padding: 10px 14px; border-top: 1px solid #f1f5f9; }
     .email-card:first-child { border-top: none; }
-    .email-card-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
-    .email-subject { font-size: 14px; font-weight: 600; color: #1e293b; flex: 1; min-width: 0;
-      overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-    .email-date { font-size: 12px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
-    .email-from { font-size: 12px; color: #64748b; margin-bottom: 2px; }
-    .email-snippet { font-size: 12px; color: #94a3b8; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; }
+    .email-card-head { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 3px; }
+    .email-summary { font-size: 13px; font-weight: 500; color: #1e293b; flex: 1; min-width: 0;
+      line-height: 1.45; word-break: break-all; }
+    .email-loading { font-size: 12px; color: #94a3b8; font-style: italic; flex: 1; }
+    .email-date { font-size: 12px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; padding-top: 1px; }
+    .email-from { font-size: 11px; color: #94a3b8; }
 
     /* ── Card Thumbnail ── */
     .trip-card-body { display: flex; align-items: center; gap: 12px; }
@@ -438,6 +443,7 @@
 const CLIENT_ID  = '620169864836-55oo9mnt42lirj233i4fkrcnssmc9kbu.apps.googleusercontent.com';
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 const GMAIL_BASE  = 'https://gmail.googleapis.com/gmail/v1/users/me';
+function getOpenAIKey() { return localStorage.getItem('openai_api_key') || ''; }
 
 let gToken       = null;
 let tokenClient  = null;
@@ -539,22 +545,80 @@ function getHeader(msg, name) {
   return msg.payload?.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
 }
 
-function emailCardHTML(msg) {
+function extractEmailBody(payload) {
+  if (!payload) return '';
+  function decode(data) {
+    try { return decodeURIComponent(escape(atob(data.replace(/-/g,'+').replace(/_/g,'/')))); }
+    catch(e) { return atob(data.replace(/-/g,'+').replace(/_/g,'/')); }
+  }
+  function stripHtml(html) {
+    return html.replace(/<style[\s\S]*?<\/style>/gi,' ')
+               .replace(/<script[\s\S]*?<\/script>/gi,' ')
+               .replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  }
+  function find(part) {
+    if (part.mimeType === 'text/plain' && part.body?.data) return decode(part.body.data);
+    if (part.mimeType === 'text/html'  && part.body?.data) return stripHtml(decode(part.body.data));
+    if (part.parts) {
+      for (const p of part.parts) if (p.mimeType === 'text/plain' && p.body?.data) return decode(p.body.data);
+      for (const p of part.parts) if (p.mimeType === 'text/html'  && p.body?.data) return stripHtml(decode(p.body.data));
+      for (const p of part.parts) { const r = find(p); if (r) return r; }
+    }
+    return '';
+  }
+  return find(payload);
+}
+
+async function getAISummary(msgId, subject, fromName, body) {
+  const apiKey = getOpenAIKey();
+  if (!apiKey) return null;
+  const key = `email_ai_${msgId}`;
+  const cached = localStorage.getItem(key);
+  if (cached) { try { return JSON.parse(cached); } catch(e) {} }
+  try {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 120,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: '你是旅遊訂單信件分析助理。回傳 JSON：{"icon":"emoji（🏨飯店 ✈️機票 🍽️餐廳 🚐接送 🎫票券 🛡️保險 📦其他）","summary":"一行繁體中文，含名稱/日期/金額/訂單號等關鍵資訊，不超過40字","type":"hotel|flight|restaurant|transport|ticket|insurance|other"}' },
+          { role: 'user', content: `主旨：${subject}\n寄件人：${fromName}\n\n${body.slice(0,1500)}` }
+        ]
+      })
+    });
+    if (!r.ok) throw new Error(`OpenAI ${r.status}`);
+    const data = await r.json();
+    const result = JSON.parse(data.choices[0].message.content);
+    localStorage.setItem(key, JSON.stringify(result));
+    return result;
+  } catch(e) {
+    console.warn('AI summary failed:', e);
+    return null;
+  }
+}
+
+function emailCardHTML(msg, aiSummary, loading) {
   const subject  = getHeader(msg, 'Subject') || '（無主旨）';
   const from     = getHeader(msg, 'From');
   const dateRaw  = getHeader(msg, 'Date');
-  const snippet  = msg.snippet || '';
   const d = new Date(dateRaw);
   const dateStr  = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
   const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim() || from;
+  const summaryLine = loading
+    ? `<span class="email-loading">摘要產生中⋯</span>`
+    : aiSummary
+      ? `<span class="email-summary">${esc(aiSummary.icon)} ${esc(aiSummary.summary)}</span>`
+      : `<span class="email-summary">${esc(subject)}</span>`;
   return `
-    <div class="email-card">
+    <div class="email-card" data-msgid="${esc(msg.id)}">
       <div class="email-card-head">
-        <span class="email-subject">${esc(subject)}</span>
+        ${summaryLine}
         <span class="email-date">${esc(dateStr)}</span>
       </div>
       <div class="email-from">${esc(fromName)}</div>
-      <div class="email-snippet">${esc(snippet)}</div>
     </div>`;
 }
 
@@ -563,40 +627,37 @@ function ordersDisconnectedHTML() {
     <button class="orders-connect-btn" onclick="toggleGmail()">連結 Gmail</button></div>`;
 }
 
+function aiKeyBannerHTML() {
+  return `<div class="ai-key-banner">
+    🤖 輸入 OpenAI API Key 啟用 AI 摘要
+    <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="sk-..." />
+    <button class="ai-key-save" onclick="saveAIKey()">儲存</button>
+  </div>`;
+}
+
+function saveAIKey() {
+  const val = document.getElementById('aiKeyInput')?.value?.trim();
+  if (!val) return;
+  localStorage.setItem('openai_api_key', val);
+  const banner = document.querySelector('.ai-key-banner');
+  if (banner) banner.remove();
+  // 重新觸發 AI 摘要
+  if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
+}
+
 async function loadTripOrders(idx) {
   const t  = trips[idx];
   const el = document.getElementById('trip-orders');
   if (!el || !gToken) return;
   el.innerHTML = '<div class="orders-state">載入信件中⋯</div>';
   try {
-    // 確保 gmailLabels 已載入
-    if (!gmailLabels) {
-      const data = await gmailGet('/labels');
-      gmailLabels = data.labels || [];
-    }
-    const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
-    const SYSTEM = new Set(['INBOX','SENT','DRAFT','TRASH','SPAM','STARRED','IMPORTANT','UNREAD','CHAT']);
-    const userLabels = gmailLabels.filter(l => !l.name.startsWith('CATEGORY_') && !SYSTEM.has(l.name));
-    const allNames   = userLabels.map(l => l.name);
-    const candidates = userLabels.filter(l => l.name.split('/').pop().startsWith(yymm));
-
-    const labelId = candidates.length === 1 ? candidates[0].id
-      : candidates.length > 1 ? (() => {
-          const tripTitle = t.name.replace('_',' ').slice(4).trim();
-          let best = candidates[0], bestScore = -1;
-          for (const c of candidates) {
-            const s = charOverlap(tripTitle, c.name.split('/').pop().replace(/^\d{4}\s*/,''));
-            if (s > bestScore) { bestScore = s; best = c; }
-          }
-          return best.id;
-        })() : null;
-
+    const labelId = await getLabelId(t.name);
     if (!labelId) {
+      const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
       el.innerHTML = `<div class="orders-state" style="text-align:left;padding:14px">
         <b>找不到對應標籤</b><br>
         <small style="color:#64748b;font-size:11px;line-height:1.8;display:block;margin-top:6px">
-          找 YYMM：<b>${esc(yymm)}</b><br>
-          全部標籤 (${allNames.length})：${esc(allNames.join(' | ') || '（無）')}
+          找 YYMM：<b>${esc(yymm)}</b>
         </small></div>`;
       return;
     }
@@ -605,12 +666,36 @@ async function loadTripOrders(idx) {
       el.innerHTML = '<div class="orders-state">此標籤下目前無信件</div>';
       return;
     }
+    const msgs = data.messages.slice(0, 15);
+
+    // 抓完整信件（含 body）
     const details = await Promise.all(
-      data.messages.slice(0, 15).map(m =>
-        gmailGet(`/messages/${m.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`)
-      )
+      msgs.map(m => gmailGet(`/messages/${m.id}?format=full`))
     );
-    el.innerHTML = details.map(emailCardHTML).join('');
+
+    // 有快取的直接顯示，沒有的先顯示 loading 佔位
+    el.innerHTML = details.map(msg => {
+      const cached = localStorage.getItem(`email_ai_${msg.id}`);
+      const aiSummary = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
+      return emailCardHTML(msg, aiSummary, !aiSummary);
+    }).join('');
+
+    // 沒有 AI Key 時顯示設定 banner
+    if (!getOpenAIKey()) {
+      el.insertAdjacentHTML('afterend', aiKeyBannerHTML());
+    }
+
+    // 背景逐一呼叫 AI，產生後更新對應卡片
+    for (const msg of details) {
+      if (localStorage.getItem(`email_ai_${msg.id}`)) continue;
+      const subject  = getHeader(msg, 'Subject') || '';
+      const from     = getHeader(msg, 'From') || '';
+      const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim();
+      const body     = extractEmailBody(msg.payload);
+      const aiSummary = await getAISummary(msg.id, subject, fromName, body);
+      const cardEl = el.querySelector(`[data-msgid="${msg.id}"]`);
+      if (cardEl && aiSummary) cardEl.outerHTML = emailCardHTML(msg, aiSummary, false);
+    }
   } catch(e) {
     el.innerHTML = `<div class="orders-state" style="color:#ef4444">載入失敗：${esc(e.message)}</div>`;
   }
