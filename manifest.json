@@ -9,8 +9,8 @@
   "background_color": "#ffffff",
   "icons": [
     {
-      "src": "abtravel.png",
-      "sizes": "1254x1254",
+      "src": "app-icon.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
