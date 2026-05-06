@@ -1102,14 +1102,16 @@ function openTrip(idx) {
   html += '</div>';
   if (t.expenses.length) html += expenseHTML(t);
 
-  html += `<div class="orders-section">
-    <div class="orders-header">📧 相關訂單信件</div>
-    <div id="trip-orders"></div>
-  </div>`;
+  if (!shareMode) {
+    html += `<div class="orders-section">
+      <div class="orders-header">📧 相關訂單信件</div>
+      <div id="trip-orders"></div>
+    </div>`;
+  }
 
   currentTripIdx = idx;
   setContent(html);
-  loadTripOrders(idx);
+  if (!shareMode) loadTripOrders(idx);
 }
 
 function dayHTML(day, n) {
@@ -1286,6 +1288,10 @@ async function init() {
     }
 
     goHome();
+    if (shareMode) {
+      document.getElementById('gmailBtn').style.display = 'none';
+      document.getElementById('settingsBtn').style.display = 'none';
+    }
     if (!shareMode) tryInitGmail();
   } catch(e) {
     document.getElementById('content').innerHTML = `
