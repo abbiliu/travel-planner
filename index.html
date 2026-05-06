@@ -697,10 +697,53 @@ function saveSettingsKey() {
   }, 800);
 }
 
+function saveTripEmailCache(tripName, details) {
+  const data = details.map(msg => ({
+    id:      msg.id,
+    subject: getHeader(msg, 'Subject') || '',
+    from:    getHeader(msg, 'From') || '',
+    date:    getHeader(msg, 'Date') || ''
+  }));
+  localStorage.setItem(`trip_emails_${tripName}`, JSON.stringify(data));
+}
+
+function renderCachedEmails(tripName, el) {
+  const raw = localStorage.getItem(`trip_emails_${tripName}`);
+  if (!raw) return false;
+  let emails;
+  try { emails = JSON.parse(raw); } catch(e) { return false; }
+  if (!emails.length) return false;
+  el.innerHTML = emails.map(e => {
+    const aiSummary = (() => {
+      const c = localStorage.getItem(`email_ai_${e.id}`);
+      try { return c ? JSON.parse(c) : null; } catch(_) { return null; }
+    })();
+    const d = new Date(e.date);
+    const dateStr  = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
+    const fromName = e.from.replace(/<[^>]+>/, '').replace(/"/g, '').trim() || e.from;
+    const summaryLine = aiSummary
+      ? `<span class="email-summary">${esc(aiSummary.icon)} ${esc(aiSummary.summary)}</span>`
+      : `<span class="email-summary">${esc(e.subject)}</span>`;
+    return `<div class="email-card" data-msgid="${esc(e.id)}">
+      <div class="email-card-head">${summaryLine}<span class="email-date">${esc(dateStr)}</span></div>
+      <div class="email-from">${esc(fromName)}</div>
+    </div>`;
+  }).join('');
+  return true;
+}
+
 async function loadTripOrders(idx) {
   const t  = trips[idx];
   const el = document.getElementById('trip-orders');
-  if (!el || !gToken) return;
+  if (!el) return;
+
+  // 無 Gmail token：嘗試從快取顯示，否則顯示連結提示
+  if (!gToken) {
+    const hasCache = renderCachedEmails(t.name, el);
+    if (!hasCache) el.innerHTML = ordersDisconnectedHTML();
+    return;
+  }
+
   el.innerHTML = '<div class="orders-state">載入信件中⋯</div>';
   try {
     const labelId = await getLabelId(t.name);
@@ -724,6 +767,9 @@ async function loadTripOrders(idx) {
     const details = await Promise.all(
       msgs.map(m => gmailGet(`/messages/${m.id}?format=full`))
     );
+
+    // 儲存 metadata 快取供離線使用
+    saveTripEmailCache(t.name, details);
 
     // 有快取的直接顯示，沒有的先顯示 loading 佔位
     el.innerHTML = details.map(msg => {
@@ -998,12 +1044,12 @@ function openTrip(idx) {
 
   html += `<div class="orders-section">
     <div class="orders-header">📧 相關訂單信件</div>
-    <div id="trip-orders">${gToken ? '' : ordersDisconnectedHTML()}</div>
+    <div id="trip-orders"></div>
   </div>`;
 
   currentTripIdx = idx;
   setContent(html);
-  if (gToken) loadTripOrders(idx);
+  loadTripOrders(idx);
 }
 
 function dayHTML(day, n) {
