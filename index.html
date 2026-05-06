@@ -778,20 +778,14 @@ function renderCachedEmails(tripName, el) {
   try { emails = JSON.parse(raw); } catch(e) { return false; }
   if (!emails.length) return false;
   el.innerHTML = emails.map(e => {
-    const aiSummary = (() => {
-      const c = localStorage.getItem(`email_ai2_${e.id}`) || localStorage.getItem(`email_ai_${e.id}`);
-      try { return c ? JSON.parse(c) : null; } catch(_) { return null; }
-    })();
-    const d = new Date(e.date);
-    const dateStr  = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
-    const fromName = e.from.replace(/<[^>]+>/, '').replace(/"/g, '').trim() || e.from;
-    const summaryLine = aiSummary
-      ? `<span class="email-summary">${esc(aiSummary.icon)} ${esc(aiSummary.summary)}</span>`
-      : `<span class="email-summary">${esc(e.subject)}</span>`;
-    return `<div class="email-card" data-msgid="${esc(e.id)}">
-      <div class="email-card-head">${summaryLine}<span class="email-date">${esc(dateStr)}</span></div>
-      <div class="email-from">${esc(fromName)}</div>
-    </div>`;
+    const c = localStorage.getItem(`email_ai2_${e.id}`) || localStorage.getItem(`email_ai_${e.id}`);
+    const aiSummary = c ? (() => { try { return JSON.parse(c); } catch(_) { return null; } })() : null;
+    const miniMsg = { id: e.id, payload: { headers: [
+      { name: 'Subject', value: e.subject },
+      { name: 'From',    value: e.from },
+      { name: 'Date',    value: e.date }
+    ]}};
+    return emailCardHTML(miniMsg, aiSummary, false);
   }).join('');
   return true;
 }
@@ -837,8 +831,8 @@ async function loadTripOrders(idx) {
 
     // 有快取的直接顯示，沒有的先顯示 loading 佔位
     el.innerHTML = details.map(msg => {
-      const cached = localStorage.getItem(`email_ai_${msg.id}`);
-      const aiSummary = cached ? (() => { try { return JSON.parse(cached); } catch(e) { return null; } })() : null;
+      const c = localStorage.getItem(`email_ai2_${msg.id}`) || localStorage.getItem(`email_ai_${msg.id}`);
+      const aiSummary = c ? (() => { try { return JSON.parse(c); } catch(e) { return null; } })() : null;
       return emailCardHTML(msg, aiSummary, !aiSummary);
     }).join('');
 
@@ -849,7 +843,7 @@ async function loadTripOrders(idx) {
 
     // 背景逐一呼叫 AI，產生後更新對應卡片
     for (const msg of details) {
-      if (localStorage.getItem(`email_ai_${msg.id}`)) continue;
+      if (localStorage.getItem(`email_ai2_${msg.id}`) || localStorage.getItem(`email_ai_${msg.id}`)) continue;
       const subject  = getHeader(msg, 'Subject') || '';
       const from     = getHeader(msg, 'From') || '';
       const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim();
