@@ -1,8 +1,9 @@
-const CACHE = 'travel-v3';
+const CACHE = 'travel-v4';
 const SHELL = [
   './index.html',
   './icon.svg',
   './manifest.json',
+  './abtravel.png',
   './scene_01.png',
   './scene_02.png',
   './scene_03.png',
