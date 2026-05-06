@@ -337,11 +337,15 @@
       border: none; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; }
     .email-card { padding: 10px 14px; border-top: 1px solid #f1f5f9; }
     .email-card:first-child { border-top: none; }
-    .email-card-head { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 3px; }
+    .email-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .email-type-tag { font-size: 11px; font-weight: 600; color: #475569; flex: 1; }
+    .email-title { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .email-detail { font-size: 11px; color: #64748b; margin-bottom: 2px; }
     .email-summary { font-size: 13px; font-weight: 500; color: #1e293b; flex: 1; min-width: 0;
       line-height: 1.45; word-break: break-all; }
     .email-loading { font-size: 12px; color: #94a3b8; font-style: italic; flex: 1; }
-    .email-date { font-size: 12px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; padding-top: 1px; }
+    .email-date { font-size: 12px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
     .email-from { font-size: 11px; color: #94a3b8; }
 
     /* ── Card Thumbnail ── */
@@ -594,19 +598,27 @@ function extractEmailBody(payload) {
 async function getAISummary(msgId, subject, fromName, body) {
   const apiKey = getOpenAIKey();
   if (!apiKey) return null;
-  const key = `email_ai_${msgId}`;
-  const cached = localStorage.getItem(key);
+  const key = `email_ai2_${msgId}`;
+  const cached = localStorage.getItem(key) || localStorage.getItem(`email_ai_${msgId}`);
   if (cached) { try { return JSON.parse(cached); } catch(e) {} }
+  const systemPrompt = `你是旅遊訂單信件分析助理。根據信件類型回傳對應 JSON，未知欄位填空字串：
+hotel:      {"type":"hotel",      "name":"飯店名","checkin":"MM/DD","checkout":"MM/DD","ref":"訂單號"}
+flight:     {"type":"flight",     "airline":"航空公司","flightNo":"航班號","route":"出發地→目的地","date":"MM/DD","ref":"訂單號"}
+transport:  {"type":"transport",  "vendor":"服務商","date":"MM/DD HH:MM","detail":"接機/送機說明"}
+ticket:     {"type":"ticket",     "name":"票名或活動名","date":"MM/DD","qty":"張數","ref":"訂單號"}
+restaurant: {"type":"restaurant", "name":"餐廳名","date":"MM/DD HH:MM","pax":"人數"}
+insurance:  {"type":"insurance",  "company":"保險公司","period":"保障期間","ref":"保單號"}
+other:      {"type":"other",      "name":"主旨重點","date":"MM/DD","detail":"一句說明"}`;
   try {
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
-        max_tokens: 120,
+        max_tokens: 150,
         response_format: { type: 'json_object' },
         messages: [
-          { role: 'system', content: '你是旅遊訂單信件分析助理。回傳 JSON：{"icon":"emoji（🏨飯店 ✈️機票 🍽️餐廳 🚐接送 🎫票券 🛡️保險 📦其他）","summary":"一行繁體中文，含名稱/日期/金額/訂單號等關鍵資訊，不超過40字","type":"hotel|flight|restaurant|transport|ticket|insurance|other"}' },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: `主旨：${subject}\n寄件人：${fromName}\n\n${body.slice(0,1500)}` }
         ]
       })
@@ -622,26 +634,78 @@ async function getAISummary(msgId, subject, fromName, body) {
   }
 }
 
+const EMAIL_TYPE_LABEL = {hotel:'飯店',flight:'機票',transport:'接送',ticket:'票券',restaurant:'餐廳',insurance:'保險',other:'其他'};
+const EMAIL_TYPE_ICON  = {hotel:'🏨',flight:'✈️',transport:'🚐',ticket:'🎫',restaurant:'🍽️',insurance:'🛡️',other:'📦'};
+
 function emailCardHTML(msg, aiSummary, loading) {
   const subject  = getHeader(msg, 'Subject') || '（無主旨）';
   const from     = getHeader(msg, 'From');
   const dateRaw  = getHeader(msg, 'Date');
   const d = new Date(dateRaw);
-  const dateStr  = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
+  const mailDate = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
   const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim() || from;
-  const summaryLine = loading
-    ? `<span class="email-loading">摘要產生中⋯</span>`
-    : aiSummary
-      ? `<span class="email-summary">${esc(aiSummary.icon)} ${esc(aiSummary.summary)}</span>`
-      : `<span class="email-summary">${esc(subject)}</span>`;
-  return `
-    <div class="email-card" data-msgid="${esc(msg.id)}">
-      <div class="email-card-head">
-        ${summaryLine}
-        <span class="email-date">${esc(dateStr)}</span>
-      </div>
+
+  if (loading) {
+    return `<div class="email-card" data-msgid="${esc(msg.id)}">
+      <div class="email-card-head"><span class="email-loading">摘要產生中⋯</span><span class="email-date">${esc(mailDate)}</span></div>
       <div class="email-from">${esc(fromName)}</div>
     </div>`;
+  }
+
+  // 舊格式（含 summary 欄位）或無摘要
+  if (!aiSummary || aiSummary.summary !== undefined) {
+    const line = aiSummary
+      ? `<span class="email-summary">${esc(aiSummary.icon||'')} ${esc(aiSummary.summary)}</span>`
+      : `<span class="email-summary">${esc(subject)}</span>`;
+    return `<div class="email-card" data-msgid="${esc(msg.id)}">
+      <div class="email-card-head">${line}<span class="email-date">${esc(mailDate)}</span></div>
+      <div class="email-from">${esc(fromName)}</div>
+    </div>`;
+  }
+
+  // 新結構化格式
+  const type  = aiSummary.type || 'other';
+  const icon  = EMAIL_TYPE_ICON[type]  || '📦';
+  const label = EMAIL_TYPE_LABEL[type] || '其他';
+  let title = '', detail = '';
+  switch (type) {
+    case 'hotel':
+      title  = aiSummary.name;
+      detail = [
+        aiSummary.checkin && aiSummary.checkout ? `入住 ${aiSummary.checkin} → 退房 ${aiSummary.checkout}` : (aiSummary.checkin || aiSummary.checkout || ''),
+        aiSummary.ref ? `訂單 ${aiSummary.ref}` : ''
+      ].filter(Boolean).join(' · ');
+      break;
+    case 'flight':
+      title  = [aiSummary.airline, aiSummary.flightNo].filter(Boolean).join(' ');
+      detail = [aiSummary.route, aiSummary.date, aiSummary.ref ? `訂單 ${aiSummary.ref}` : ''].filter(Boolean).join(' · ');
+      break;
+    case 'transport':
+      title  = aiSummary.vendor;
+      detail = [aiSummary.date, aiSummary.detail].filter(Boolean).join(' · ');
+      break;
+    case 'ticket':
+      title  = aiSummary.name;
+      detail = [aiSummary.date, aiSummary.qty ? `×${aiSummary.qty}張` : '', aiSummary.ref ? `訂單 ${aiSummary.ref}` : ''].filter(Boolean).join(' · ');
+      break;
+    case 'restaurant':
+      title  = aiSummary.name;
+      detail = [aiSummary.date, aiSummary.pax ? `${aiSummary.pax}人` : ''].filter(Boolean).join(' · ');
+      break;
+    case 'insurance':
+      title  = aiSummary.company;
+      detail = [aiSummary.period, aiSummary.ref ? `保單 ${aiSummary.ref}` : ''].filter(Boolean).join(' · ');
+      break;
+    default:
+      title  = aiSummary.name;
+      detail = [aiSummary.date, aiSummary.detail].filter(Boolean).join(' · ');
+  }
+  return `<div class="email-card" data-msgid="${esc(msg.id)}">
+    <div class="email-card-head"><span class="email-type-tag">${icon} ${esc(label)}</span><span class="email-date">${esc(mailDate)}</span></div>
+    <div class="email-title">${esc(title || subject)}</div>
+    ${detail ? `<div class="email-detail">${esc(detail)}</div>` : ''}
+    <div class="email-from">${esc(fromName)}</div>
+  </div>`;
 }
 
 function ordersDisconnectedHTML() {
@@ -715,7 +779,7 @@ function renderCachedEmails(tripName, el) {
   if (!emails.length) return false;
   el.innerHTML = emails.map(e => {
     const aiSummary = (() => {
-      const c = localStorage.getItem(`email_ai_${e.id}`);
+      const c = localStorage.getItem(`email_ai2_${e.id}`) || localStorage.getItem(`email_ai_${e.id}`);
       try { return c ? JSON.parse(c) : null; } catch(_) { return null; }
     })();
     const d = new Date(e.date);
