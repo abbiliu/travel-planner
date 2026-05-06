@@ -556,9 +556,8 @@ async function getLabelId(tripName) {
     return l.name.split('/').pop().startsWith(yymm);
   });
   if (!candidates.length) return null;
-  if (candidates.length === 1) return candidates[0].id;
 
-  // 多個候選：取字元重疊最高的，0 分視為無對應
+  // 單一或多個候選都要檢查字元重疊，0 分視為無對應
   const tripTitle = tripName.replace('_', ' ').slice(4).trim();
   let best = null, bestScore = 0;
   for (const c of candidates) {
