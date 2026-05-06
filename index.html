@@ -601,7 +601,7 @@ async function getAISummary(msgId, subject, fromName, body) {
   const apiKey = getOpenAIKey();
   if (!apiKey) return null;
   const key = `email_ai2_${msgId}`;
-  const cached = localStorage.getItem(key) || localStorage.getItem(`email_ai_${msgId}`);
+  const cached = localStorage.getItem(key);
   if (cached) { try { return JSON.parse(cached); } catch(e) {} }
   const systemPrompt = `你是旅遊訂單信件分析助理。根據信件類型回傳對應 JSON，未知欄位填空字串：
 hotel:      {"type":"hotel",      "name":"飯店名","checkin":"MM/DD","checkout":"MM/DD","ref":"訂單號"}
@@ -808,6 +808,7 @@ async function loadTripOrders(idx) {
   try {
     const labelId = await getLabelId(t.name);
     if (!labelId) {
+      localStorage.removeItem(`trip_emails_${t.name}`);
       const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
       el.innerHTML = `<div class="orders-state" style="text-align:left;padding:14px">
         <b>找不到對應標籤</b><br>
