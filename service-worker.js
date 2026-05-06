@@ -1,4 +1,4 @@
-const CACHE = 'travel-v5';
+const CACHE = 'travel-v6';
 const SHELL = [
   './index.html',
   './icon.svg',
