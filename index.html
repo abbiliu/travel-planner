@@ -537,10 +537,12 @@ async function getLabelId(tripName) {
     gmailLabels = data.labels || [];
   }
 
-  // _config 手動覆蓋
+  // _config 手動覆蓋（label 格式：YYYY/YYMM 名稱 或純標籤名，比對最後一段）
   const override = labelConfig[tripName];
   if (override) {
-    return gmailLabels.find(l => l.name === `旅行/${override}`)?.id || null;
+    return gmailLabels.find(l => l.name.split('/').pop() === override)?.id
+        || gmailLabels.find(l => l.name.split('/').pop().startsWith(override))?.id
+        || null;
   }
 
   // 自動模糊比對
@@ -556,15 +558,15 @@ async function getLabelId(tripName) {
   if (!candidates.length) return null;
   if (candidates.length === 1) return candidates[0].id;
 
-  // 多個候選：取字元重疊最高的
+  // 多個候選：取字元重疊最高的，0 分視為無對應
   const tripTitle = tripName.replace('_', ' ').slice(4).trim();
-  let best = candidates[0], bestScore = -1;
+  let best = null, bestScore = 0;
   for (const c of candidates) {
     const labelTitle = c.name.split('/').pop().replace(/^\d{4}\s*/, '');
     const score = charOverlap(tripTitle, labelTitle);
     if (score > bestScore) { bestScore = score; best = c; }
   }
-  return best.id;
+  return best ? best.id : null;
 }
 
 function getHeader(msg, name) {
@@ -843,7 +845,7 @@ async function loadTripOrders(idx) {
 
     // 背景逐一呼叫 AI，產生後更新對應卡片
     for (const msg of details) {
-      if (localStorage.getItem(`email_ai2_${msg.id}`) || localStorage.getItem(`email_ai_${msg.id}`)) continue;
+      if (localStorage.getItem(`email_ai2_${msg.id}`)) continue;
       const subject  = getHeader(msg, 'Subject') || '';
       const from     = getHeader(msg, 'From') || '';
       const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim();
