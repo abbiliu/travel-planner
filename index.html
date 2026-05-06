@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="旅行規劃站">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="apple-touch-icon" href="abtravel.png">
   <meta name="theme-color" content="#1e40af">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -293,16 +293,49 @@
     }
     .map-btn:active { background: #dbeafe; }
 
-    /* ── Gmail Button ── */
-    .gmail-btn { position: relative; font-size: 19px; }
-    .gmail-dot {
-      position: absolute; top: 1px; right: 1px;
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #64748b;
-      border: 1.5px solid #1e40af;
-      transition: background 0.2s;
+    /* ── More Menu ── */
+    .more-btn { position: relative; }
+
+    .more-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.20);
+      min-width: 190px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px) scale(0.96);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      z-index: 300;
     }
-    .gmail-dot.on { background: #4ade80; }
+    .more-dropdown.open {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateY(0) scale(1);
+    }
+    .more-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      font-size: 15px;
+      color: #1e293b;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .more-item:last-child { border-bottom: none; }
+    .more-item:active { background: #eff6ff; }
+    .more-item-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      flex-shrink: 0;
+    }
+    .more-item-dot.on { background: #4ade80; }
 
     /* ── Orders Section ── */
     .orders-section {
@@ -423,10 +456,21 @@
       <span>‹</span><span class="back-btn-text">返回</span>
     </button>
     <span class="header-title" id="headerTitle">✈️ 旅行規劃站</span>
-    <button class="icon-btn gmail-btn" id="gmailBtn" onclick="toggleGmail()" title="連結 Gmail 查看訂單" style="display:none">
-      📧<span class="gmail-dot" id="gmailDot"></span>
-    </button>
-    <button class="icon-btn" id="settingsBtn" onclick="openSettings()" title="設定">⚙️</button>
+    <div style="position:relative">
+      <button class="icon-btn more-btn" id="moreBtn" onclick="toggleMore()">
+        <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="currentColor">
+          <path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/>
+        </svg>
+      </button>
+      <div class="more-dropdown" id="moreDropdown">
+        <div class="more-item" id="moreGmailItem" onclick="closeMore();toggleGmail()">
+          <span>📧</span><span style="flex:1">連結 Gmail</span><span class="more-item-dot" id="moreGmailDot"></span>
+        </div>
+        <div class="more-item" onclick="closeMore();openSettings()">
+          <span>⚙️</span><span>設定 API Key</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Settings Modal -->
@@ -490,7 +534,6 @@ function tryInitGmail() {
         if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
       }
     });
-    document.getElementById('gmailBtn').style.display = '';
     updateGmailBtn(false);
   } else {
     setTimeout(tryInitGmail, 200);
@@ -504,17 +547,33 @@ function toggleGmail() {
     updateGmailBtn(false);
     const el = document.getElementById('trip-orders');
     if (el) el.innerHTML = ordersDisconnectedHTML();
-  } else {
+  } else if (tokenClient) {
     tokenClient.requestAccessToken({ prompt: '' });
   }
 }
 
 function updateGmailBtn(on) {
-  const btn = document.getElementById('gmailBtn');
-  if (!btn) return;
-  btn.title = on ? '已連結 Gmail（點擊斷開）' : '連結 Gmail 查看訂單';
-  document.getElementById('gmailDot').classList.toggle('on', on);
+  const dot = document.getElementById('moreGmailDot');
+  if (dot) dot.classList.toggle('on', on);
+  const item = document.getElementById('moreGmailItem');
+  if (item) item.title = on ? '已連結 Gmail（點擊斷開）' : '連結 Gmail 查看訂單';
 }
+
+function toggleMore() {
+  document.getElementById('moreDropdown').classList.toggle('open');
+}
+
+function closeMore() {
+  document.getElementById('moreDropdown').classList.remove('open');
+}
+
+document.addEventListener('click', (e) => {
+  const btn = document.getElementById('moreBtn');
+  const dropdown = document.getElementById('moreDropdown');
+  if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
+    dropdown.classList.remove('open');
+  }
+});
 
 async function gmailGet(path) {
   const r = await fetch(`${GMAIL_BASE}${path}`, {
@@ -1289,8 +1348,7 @@ async function init() {
 
     goHome();
     if (shareMode) {
-      document.getElementById('gmailBtn').style.display = 'none';
-      document.getElementById('settingsBtn').style.display = 'none';
+      document.getElementById('moreBtn').closest('div').style.display = 'none';
     }
     if (!shareMode) tryInitGmail();
   } catch(e) {
