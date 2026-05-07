@@ -528,6 +528,11 @@
     .cal-bar-single { border-radius: 3px; margin: 0 4px; }
     .cal-bar-start  { border-radius: 3px 0 0 3px; margin-left: 4px; margin-right: 0; }
     .cal-bar-end    { border-radius: 0 3px 3px 0; margin-left: 0; margin-right: 4px; }
+
+    .cal-holiday-num { color: #ef4444; }
+    .cal-work-num    { text-decoration: underline; text-underline-offset: 2px; }
+    .cal-work-tag    { font-size: 8px; font-weight: 700; color: #f59e0b; text-align: center; line-height: 1; margin-bottom: 2px; }
+    .cal-desc        { font-size: 9px; color: #94a3b8; text-align: center; line-height: 1.2; margin-bottom: 2px; overflow: hidden; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -1168,12 +1173,50 @@ function esc(s) {
 const TRIP_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
 function getTripColor(idx) { return TRIP_COLORS[idx % TRIP_COLORS.length]; }
 
-function openCalendar() {
+const TW_CAL_TTL = 7 * 24 * 60 * 60 * 1000;
+let twCalData = {};
+
+async function loadTWCal(year) {
+  const cacheKey = `twcal_${year}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { ts, data } = JSON.parse(cached);
+      if (Date.now() - ts < TW_CAL_TTL) return data;
+    }
+  } catch(e) {}
+  try {
+    const r = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const arr = await r.json();
+    const data = {};
+    for (const item of arr) {
+      const ds = String(item.date || '');
+      if (ds.length === 8) data[ds] = { isHoliday: !!item.isHoliday, description: item.description || '' };
+    }
+    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+    return data;
+  } catch(e) {
+    console.warn(`TW calendar ${year} load failed:`, e);
+    return null;
+  }
+}
+
+async function openCalendar() {
   currentTripIdx = null;
   document.getElementById('menuBtn').style.display = 'none';
   document.getElementById('backBtn').style.display = '';
   document.getElementById('headerTitle').textContent = '月曆';
   closeDrawer();
+  setContent('<div class="center-msg"><div class="spinner"></div>載入行事曆⋯</div>');
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const years = new Set([today.getFullYear()]);
+  for (const t of trips) { years.add(t.start.getFullYear()); years.add(t.end.getFullYear()); }
+  await Promise.all([...years].map(async y => {
+    if (!(y in twCalData)) twCalData[y] = await loadTWCal(y);
+  }));
+
   setContent(buildCalendarHTML());
   requestAnimationFrame(() => {
     const el = document.querySelector('.cal-month-current');
@@ -1206,6 +1249,14 @@ function buildCalendarHTML() {
   });
   html += '</div>';
 
+  // 未取得行事曆的年份提示
+  const allYears = [];
+  for (let y = minY; y <= maxY; y++) allYears.push(y);
+  const failedYears = allYears.filter(y => twCalData[y] === null);
+  if (failedYears.length) {
+    html += `<div style="padding:6px 16px 2px;font-size:11px;color:#94a3b8">⚠️ ${failedYears.join('、')} 年行事曆未取得，以週末為準</div>`;
+  }
+
   let y = minY, m = minM;
   while (y < maxY || (y === maxY && m <= maxM)) {
     html += renderCalMonth(y, m, today);
@@ -1219,6 +1270,7 @@ function renderCalMonth(year, month, today) {
   const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   const WEEKDAYS = ['日','一','二','三','四','五','六'];
   const isCurrent = year === today.getFullYear() && month === today.getMonth();
+  const yearData = twCalData[year] || null;
 
   let html = `<div class="cal-month${isCurrent ? ' cal-month-current' : ''}">`;
   html += `<div class="cal-month-header">${year} 年 ${MONTH_NAMES[month]}</div>`;
@@ -1234,6 +1286,16 @@ function renderCalMonth(year, month, today) {
   for (let d = 1; d <= daysInMonth; d++) {
     const cell = new Date(year, month, d);
     const isToday = cell.getTime() === today.getTime();
+    const dow = cell.getDay();
+    const ds = `${year}${String(month+1).padStart(2,'0')}${String(d).padStart(2,'0')}`;
+    const tw = yearData ? (yearData[ds] || null) : null;
+
+    // 假日：tw 說是假日，或無資料時以週末判斷
+    const isHoliday = tw ? tw.isHoliday : (dow === 0 || dow === 6);
+    // 補班：週六/日但 tw 說不是假日
+    const isWork = tw ? (!tw.isHoliday && (dow === 0 || dow === 6)) : false;
+    // 節日名稱（最多顯示 4 字）
+    const desc = tw?.description ? tw.description.slice(0, 4) : '';
 
     const dayTrips = trips.map((t, idx) => {
       const s = new Date(t.start); s.setHours(0,0,0,0);
@@ -1241,7 +1303,15 @@ function renderCalMonth(year, month, today) {
       return (cell >= s && cell <= e) ? { t, idx, s, e } : null;
     }).filter(Boolean);
 
-    html += `<div class="cal-cell"><div class="cal-date-num${isToday ? ' cal-today-num' : ''}">${d}</div>`;
+    let numCls = 'cal-date-num';
+    if (isToday)        numCls += ' cal-today-num';
+    else if (isWork)    numCls += ' cal-work-num';
+    else if (isHoliday) numCls += ' cal-holiday-num';
+
+    html += `<div class="cal-cell"><div class="${numCls}">${d}</div>`;
+    if (!isToday && isWork)              html += `<div class="cal-work-tag">補</div>`;
+    else if (!isToday && isHoliday && desc) html += `<div class="cal-desc">${esc(desc)}</div>`;
+
     if (dayTrips.length) {
       html += '<div class="cal-trips">';
       dayTrips.forEach(({ t, idx, s, e }) => {
