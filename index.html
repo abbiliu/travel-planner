@@ -445,6 +445,89 @@
       color: #1d4ed8;
       border-top: 2px solid #bfdbfe;
     }
+
+    /* ── Calendar ── */
+    .cal-container { padding: 0 0 48px; }
+
+    .cal-legend {
+      padding: 12px 16px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .cal-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cal-legend-item:active { opacity: 0.7; }
+    .cal-legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .cal-legend-name { font-size: 14px; color: #1e293b; flex: 1; }
+    .cal-legend-range { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+
+    .cal-month { margin-bottom: 16px; }
+    .cal-month-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      padding: 12px 16px 6px;
+    }
+    .cal-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 0 8px;
+    }
+    .cal-weekday {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      padding: 2px 0 4px;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      padding: 0 8px;
+    }
+    .cal-cell {
+      min-height: 48px;
+      padding: 4px 0 3px;
+    }
+    .cal-date-num {
+      font-size: 13px;
+      text-align: center;
+      line-height: 24px;
+      width: 24px;
+      height: 24px;
+      margin: 0 auto 3px;
+      border-radius: 50%;
+      color: #334155;
+    }
+    .cal-today-num {
+      background: #1e40af;
+      color: #fff;
+      font-weight: 700;
+    }
+    .cal-trips { display: flex; flex-direction: column; gap: 2px; }
+    .cal-trip-bar {
+      height: 5px;
+      cursor: pointer;
+      opacity: 0.88;
+      transition: opacity 0.15s;
+    }
+    .cal-trip-bar:active { opacity: 1; }
+    .cal-bar-single { border-radius: 3px; margin: 0 4px; }
+    .cal-bar-start  { border-radius: 3px 0 0 3px; margin-left: 4px; margin-right: 0; }
+    .cal-bar-end    { border-radius: 0 3px 3px 0; margin-left: 0; margin-right: 4px; }
   </style>
 </head>
 <body>
@@ -456,6 +539,11 @@
       <span>‹</span><span class="back-btn-text">返回</span>
     </button>
     <span class="header-title" id="headerTitle">✈️ 旅行規劃站</span>
+    <button class="icon-btn" id="calBtn" onclick="openCalendar()" title="月曆">
+      <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="currentColor">
+        <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z"/>
+      </svg>
+    </button>
     <div style="position:relative">
       <button class="icon-btn more-btn" id="moreBtn" onclick="toggleMore()">
         <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="currentColor">
@@ -1075,6 +1163,103 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Calendar ─────────────────────────────────────────────
+
+const TRIP_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+function getTripColor(idx) { return TRIP_COLORS[idx % TRIP_COLORS.length]; }
+
+function openCalendar() {
+  currentTripIdx = null;
+  document.getElementById('menuBtn').style.display = 'none';
+  document.getElementById('backBtn').style.display = '';
+  document.getElementById('headerTitle').textContent = '月曆';
+  closeDrawer();
+  setContent(buildCalendarHTML());
+  requestAnimationFrame(() => {
+    const el = document.querySelector('.cal-month-current');
+    if (!el) return;
+    const headerH = document.getElementById('header')?.offsetHeight || 50;
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top - headerH - 4), behavior: 'instant' });
+  });
+}
+
+function buildCalendarHTML() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  let minY = today.getFullYear(), minM = today.getMonth();
+  let maxY = today.getFullYear(), maxM = today.getMonth() + 2;
+
+  for (const t of trips) {
+    const s = t.start, e = t.end;
+    if (s.getFullYear() < minY || (s.getFullYear() === minY && s.getMonth() < minM)) { minY = s.getFullYear(); minM = s.getMonth(); }
+    if (e.getFullYear() > maxY || (e.getFullYear() === maxY && e.getMonth() > maxM)) { maxY = e.getFullYear(); maxM = e.getMonth(); }
+  }
+
+  let html = '<div class="cal-container"><div class="cal-legend">';
+  trips.forEach((t, idx) => {
+    const color = getTripColor(idx);
+    const shortRange = t.range.replace(/^\d{4}\//, '');
+    html += `<div class="cal-legend-item" onclick="openTrip(${idx})">
+      <span class="cal-legend-dot" style="background:${color}"></span>
+      <span class="cal-legend-name">${getFlag(t.title)} ${esc(t.title)}</span>
+      <span class="cal-legend-range">${esc(shortRange)}</span>
+    </div>`;
+  });
+  html += '</div>';
+
+  let y = minY, m = minM;
+  while (y < maxY || (y === maxY && m <= maxM)) {
+    html += renderCalMonth(y, m, today);
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderCalMonth(year, month, today) {
+  const MONTH_NAMES = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const WEEKDAYS = ['日','一','二','三','四','五','六'];
+  const isCurrent = year === today.getFullYear() && month === today.getMonth();
+
+  let html = `<div class="cal-month${isCurrent ? ' cal-month-current' : ''}">`;
+  html += `<div class="cal-month-header">${year} 年 ${MONTH_NAMES[month]}</div>`;
+  html += '<div class="cal-weekdays">';
+  WEEKDAYS.forEach(d => { html += `<div class="cal-weekday">${d}</div>`; });
+  html += '</div><div class="cal-grid">';
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell"></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = new Date(year, month, d);
+    const isToday = cell.getTime() === today.getTime();
+
+    const dayTrips = trips.map((t, idx) => {
+      const s = new Date(t.start); s.setHours(0,0,0,0);
+      const e = new Date(t.end);   e.setHours(0,0,0,0);
+      return (cell >= s && cell <= e) ? { t, idx, s, e } : null;
+    }).filter(Boolean);
+
+    html += `<div class="cal-cell"><div class="cal-date-num${isToday ? ' cal-today-num' : ''}">${d}</div>`;
+    if (dayTrips.length) {
+      html += '<div class="cal-trips">';
+      dayTrips.forEach(({ t, idx, s, e }) => {
+        const color = getTripColor(idx);
+        const isStart = cell.getTime() === s.getTime();
+        const isEnd   = cell.getTime() === e.getTime();
+        const cls = isStart && isEnd ? 'cal-bar-single' : isStart ? 'cal-bar-start' : isEnd ? 'cal-bar-end' : '';
+        html += `<div class="cal-trip-bar ${cls}" style="background:${color}" onclick="openTrip(${idx})"></div>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
 // ── Home ─────────────────────────────────────────────────
 
 function goHome() {
@@ -1349,6 +1534,7 @@ async function init() {
     goHome();
     if (shareMode) {
       document.getElementById('moreBtn').closest('div').style.display = 'none';
+      document.getElementById('calBtn').style.display = 'none';
     }
     if (!shareMode) tryInitGmail();
   } catch(e) {
