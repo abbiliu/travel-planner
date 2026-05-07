@@ -1534,7 +1534,6 @@ async function init() {
     goHome();
     if (shareMode) {
       document.getElementById('moreBtn').closest('div').style.display = 'none';
-      document.getElementById('calBtn').style.display = 'none';
     }
     if (!shareMode) tryInitGmail();
   } catch(e) {
