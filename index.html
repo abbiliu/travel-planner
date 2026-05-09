@@ -672,7 +672,13 @@
       <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">用於 Trip Notes 共筆功能，存在本裝置，不會上傳。</div>
       <input id="settingsGasInput" type="text" placeholder="https://script.google.com/macros/s/..."
         style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:6px;" />
-      <div id="settingsGasStatus" style="font-size:12px;height:18px;margin-bottom:14px;"></div>
+      <div id="settingsGasStatus" style="font-size:12px;height:18px;margin-bottom:16px;"></div>
+
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Owner Token</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">設定後，從主網址也可使用 Trip Notes（無需加 ?share= 參數）。</div>
+      <input id="settingsOwnerTokenInput" type="text" placeholder="例如：astravel"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:6px;" />
+      <div id="settingsOwnerTokenStatus" style="font-size:12px;height:18px;margin-bottom:14px;"></div>
 
       <div style="display:flex;gap:10px;">
         <button onclick="saveSettingsAll()"
@@ -995,6 +1001,13 @@ function openSettings() {
   const gasStatus = document.getElementById('settingsGasStatus');
   gasStatus.textContent = gasExisting ? '✅ 已設定 Apps Script URL' : '⚠️ 尚未設定，Trip Notes 不可用';
   gasStatus.style.color = gasExisting ? '#16a34a' : '#f59e0b';
+  const otExisting = getOwnerToken();
+  const otInput = document.getElementById('settingsOwnerTokenInput');
+  otInput.value = otExisting || '';
+  otInput.placeholder = otExisting ? '（已設定，可重新輸入覆蓋）' : '例如：astravel';
+  const otStatus = document.getElementById('settingsOwnerTokenStatus');
+  otStatus.textContent = otExisting ? '✅ 已設定 Owner Token：' + otExisting : '（選填）';
+  otStatus.style.color = otExisting ? '#16a34a' : '#94a3b8';
 }
 
 function closeSettings() {
@@ -1013,6 +1026,17 @@ function saveSettingsAll() {
     saveGasUrl(gasVal);
     document.getElementById('settingsGasStatus').textContent = '✅ 已儲存';
     document.getElementById('settingsGasStatus').style.color = '#16a34a';
+  }
+  const otInput = document.getElementById('settingsOwnerTokenInput');
+  if (otInput) {
+    const otVal = otInput.value.trim();
+    if (otVal) {
+      saveOwnerToken(otVal);
+      document.getElementById('settingsOwnerTokenStatus').textContent = '✅ 已儲存：' + otVal;
+      document.getElementById('settingsOwnerTokenStatus').style.color = '#16a34a';
+    } else if (otInput.value === '') {
+      localStorage.removeItem('owner_token');
+    }
   }
   setTimeout(() => {
     closeSettings();
@@ -1526,7 +1550,7 @@ function openTrip(idx) {
   document.getElementById('headerTitle').textContent = t.title;
   document.getElementById('calBtn').style.display = 'none';
   document.getElementById('moreBtnWrap').style.display = 'none';
-  document.getElementById('notesBtn').style.display = (shareMode && getGasUrl()) ? 'flex' : 'none';
+  document.getElementById('notesBtn').style.display = ((shareMode || getOwnerToken()) && getGasUrl()) ? 'flex' : 'none';
   closeDrawer();
 
   const flag = getFlag(t.title);
@@ -1765,6 +1789,8 @@ const noteImagesCache = {};  // noteId_imageId → { imageUrl, thumbnailUrl }
 // ── GAS URL ────────────────────────────────────────────────────────
 function getGasUrl() { return (localStorage.getItem('gas_url') || '').trim(); }
 function saveGasUrl(url) { localStorage.setItem('gas_url', url.trim()); }
+function getOwnerToken() { return (localStorage.getItem('owner_token') || '').trim(); }
+function saveOwnerToken(t) { localStorage.setItem('owner_token', t.trim()); }
 
 // ── Device ID & Identity ──────────────────────────────────────────
 function getDeviceId() {
@@ -1772,7 +1798,7 @@ function getDeviceId() {
   if (!id) { id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('tripPlannerDeviceId', id); }
   return id;
 }
-function currentShareToken() { return new URLSearchParams(location.search).get('share') || ''; }
+function currentShareToken() { return new URLSearchParams(location.search).get('share') || getOwnerToken() || ''; }
 function getIdentity(token) {
   try { return JSON.parse(localStorage.getItem('tripIdentity_' + token)) || null; } catch (_) { return null; }
 }
