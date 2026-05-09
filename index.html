@@ -1732,6 +1732,9 @@ async function init() {
             displayName: (row[1] || '').trim(),
             sheetNames: (row[2] || '').split('|').map(s => s.trim()).filter(Boolean),
           };
+          // D 欄：GAS URL — 自動存入 localStorage 讓分享用戶也能使用 Trip Notes
+          const rowGasUrl = (row[3] || '').trim();
+          if (rowGasUrl && !getGasUrl()) saveGasUrl(rowGasUrl);
           break;
         }
       }
