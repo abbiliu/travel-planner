@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>旅行規劃站</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    (function() {
+      const shareParam = new URLSearchParams(location.search).get('share');
+      if (shareParam) {
+        const m = {"name":"旅行規劃站","short_name":"旅行","description":"旅遊行程規劃，隨時查看","start_url":"./index.html?share="+encodeURIComponent(shareParam),"display":"standalone","orientation":"portrait","theme_color":"#1e40af","background_color":"#ffffff","icons":[{"src":"app-icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]};
+        const blob = new Blob([JSON.stringify(m)], {type: 'application/manifest+json'});
+        document.querySelector('link[rel="manifest"]').href = URL.createObjectURL(blob);
+      }
+    })();
+  </script>
   <script src="https://accounts.google.com/gsi/client" async></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
