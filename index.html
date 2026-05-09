@@ -1222,6 +1222,8 @@ async function openCalendar() {
 
   const today = new Date(); today.setHours(0,0,0,0);
   const years = new Set([today.getFullYear()]);
+  const floor12 = new Date(today.getFullYear(), today.getMonth() + 12, 1);
+  years.add(floor12.getFullYear());
   for (const t of trips) { years.add(t.start.getFullYear()); years.add(t.end.getFullYear()); }
   await Promise.all([...years].map(async y => {
     if (!(y in twCalData)) twCalData[y] = await loadTWCal(y);
@@ -1239,7 +1241,8 @@ async function openCalendar() {
 function buildCalendarHTML() {
   const today = new Date(); today.setHours(0,0,0,0);
   let minY = today.getFullYear(), minM = today.getMonth();
-  let maxY = today.getFullYear(), maxM = today.getMonth() + 2;
+  const floor12 = new Date(today.getFullYear(), today.getMonth() + 12, 1);
+  let maxY = floor12.getFullYear(), maxM = floor12.getMonth();
 
   for (const t of trips) {
     const s = t.start, e = t.end;
