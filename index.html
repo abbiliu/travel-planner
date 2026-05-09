@@ -639,7 +639,7 @@
         <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z"/>
       </svg>
     </button>
-    <button id="notesBtn" onclick="openNotes()">📝 Notes</button>
+    <button id="notesBtn" onclick="openNotes()"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor"><path d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54H360q-66 0-113 47t-47 113v382q-16-9-27.5-24T158-276L81-710Zm719 390H640v160l160-160Z"/></svg> Notes</button>
     <div id="moreBtnWrap" style="position:relative">
       <button class="icon-btn more-btn" id="moreBtn" onclick="toggleMore()">
         <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="currentColor">
@@ -1313,6 +1313,7 @@ async function loadTWCal(year) {
 async function openCalendar() {
   currentTripIdx = null;
   stopPolling();
+  document.querySelector('.fab')?.remove();
   document.getElementById('menuBtn').style.display = 'none';
   document.getElementById('backBtn').style.display = '';
   document.getElementById('headerTitle').textContent = '月曆';
@@ -1450,6 +1451,7 @@ function renderCalMonth(year, month, today) {
 function goHome() {
   currentTripIdx = null;
   stopPolling();
+  document.querySelector('.fab')?.remove();
   if (!shareMode) document.getElementById('menuBtn').style.display = '';
   document.getElementById('backBtn').style.display = 'none';
   document.getElementById('headerTitle').textContent = '✈️ 旅行規劃站';
@@ -1516,6 +1518,7 @@ function cardHTML(t) {
 
 function openTrip(idx) {
   stopPolling();
+  document.querySelector('.fab')?.remove();
   currentNotes = [];
   const t = trips[idx];
   document.getElementById('menuBtn').style.display = 'none';
@@ -1932,8 +1935,8 @@ function renderNotesPage(t) {
   let html = `
     <div class="notes-filter">
       <button class="notes-filter-btn${notesFilter==='all'?' active':''}" onclick="setNotesFilter('all')">全部</button>
-      <button class="notes-filter-btn${notesFilter==='note'?' active':''}" onclick="setNotesFilter('note')">📝 一般</button>
-      <button class="notes-filter-btn${notesFilter==='expense'?' active':''}" onclick="setNotesFilter('expense')">💰 開銷</button>
+      <button class="notes-filter-btn${notesFilter==='note'?' active':''}" onclick="setNotesFilter('note')">一般</button>
+      <button class="notes-filter-btn${notesFilter==='expense'?' active':''}" onclick="setNotesFilter('expense')">開銷</button>
     </div>`;
 
   if (filtered.length === 0) {
@@ -1951,10 +1954,13 @@ function renderNotesPage(t) {
   }
   setContent(html);
 
-  const fab = document.createElement('button');
-  fab.className = 'fab'; fab.textContent = '+';
+  let fab = document.querySelector('.fab');
+  if (!fab) {
+    fab = document.createElement('button');
+    fab.className = 'fab'; fab.textContent = '+';
+    document.body.appendChild(fab);
+  }
   fab.onclick = () => showNoteForm(t, null);
-  document.getElementById('content').appendChild(fab);
 }
 
 function formatNoteDateLabel(dateStr, t) {
@@ -2080,8 +2086,8 @@ function showNoteForm(t, editNoteId) {
       <div class="overlay-body">
         <div class="form-section-label">分類</div>
         <div class="form-cat-btns">
-          <button class="form-cat-btn${formCat==='note'?' active':''}" onclick="setFormCat('note')">📝 一般筆記</button>
-          <button class="form-cat-btn${formCat==='expense'?' active':''}" onclick="setFormCat('expense')">💰 開銷紀錄</button>
+          <button class="form-cat-btn${formCat==='note'?' active':''}" onclick="setFormCat('note')">一般筆記</button>
+          <button class="form-cat-btn${formCat==='expense'?' active':''}" onclick="setFormCat('expense')">開銷紀錄</button>
         </div>
         <div class="form-section-label">日期</div>
         <div class="form-date-row">
