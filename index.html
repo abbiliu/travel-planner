@@ -2100,12 +2100,13 @@ function showNoteForm(t, editNoteId) {
   editingNoteId = editNoteId; pendingImages = [];
   const note = editNoteId ? currentNotes.find(n => n.noteId === editNoteId) : null;
   const identity = currentIdentity();
+  const toLocalDateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const dates = [];
   const s0 = new Date(t.start); s0.setHours(0,0,0,0);
   const e0 = new Date(t.end);   e0.setHours(0,0,0,0);
   for (let d = new Date(s0); d <= e0; d.setDate(d.getDate()+1)) dates.push(new Date(d));
   const today = new Date(); today.setHours(0,0,0,0);
-  const defaultDateStr = note?.date || (dates.find(d=>d.getTime()===today.getTime())||dates[0]||today).toISOString().slice(0,10);
+  const defaultDateStr = note?.date || toLocalDateStr(dates.find(d=>d.getTime()===today.getTime())||dates[0]||today);
 
   let formCat = note?.category || 'note';
   let formDateStr = defaultDateStr;
@@ -2137,7 +2138,7 @@ function showNoteForm(t, editNoteId) {
         <div class="form-date-row">
           <select id="formDateSel" class="form-select" ${formNoDate?'disabled':''}>
             ${dates.map((d,i)=>{
-              const s=d.toISOString().slice(0,10);
+              const s=toLocalDateStr(d);
               return `<option value="${s}"${s===formDateStr?' selected':''}>Day ${i+1} (${d.getMonth()+1}/${d.getDate()})</option>`;
             }).join('')}
           </select>
