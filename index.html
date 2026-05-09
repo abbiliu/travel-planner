@@ -1343,7 +1343,7 @@ async function openCalendar() {
   document.getElementById('headerTitle').textContent = '月曆';
   document.getElementById('notesBtn').style.display = 'none';
   document.getElementById('calBtn').style.display = '';
-  document.getElementById('moreBtnWrap').style.display = '';
+  document.getElementById('moreBtnWrap').style.display = shareMode ? 'none' : '';
   closeDrawer();
   setContent('<div class="center-msg"><div class="spinner"></div>載入行事曆⋯</div>');
 
@@ -1481,7 +1481,7 @@ function goHome() {
   document.getElementById('headerTitle').textContent = '✈️ 旅行規劃站';
   document.getElementById('notesBtn').style.display = 'none';
   document.getElementById('calBtn').style.display = '';
-  document.getElementById('moreBtnWrap').style.display = '';
+  document.getElementById('moreBtnWrap').style.display = shareMode ? 'none' : '';
   closeDrawer();
 
   const thisYear = new Date().getFullYear();
