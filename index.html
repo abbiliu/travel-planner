@@ -2291,6 +2291,17 @@ init();
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./service-worker.js');
+  // Tell SW the active share token so it can inject into manifest start_url (iOS PWA fix)
+  const _swShareId = new URLSearchParams(location.search).get('share');
+  const _swStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  navigator.serviceWorker.ready.then(reg => {
+    if (!reg.active) return;
+    if (_swShareId) {
+      reg.active.postMessage({ type: 'SET_SHARE_TOKEN', token: _swShareId });
+    } else if (!_swStandalone) {
+      reg.active.postMessage({ type: 'CLEAR_SHARE_TOKEN' });
+    }
+  }).catch(() => {});
 }
 </script>
 </body>
