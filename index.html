@@ -1297,7 +1297,7 @@ function badge(status) {
 }
 
 function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Calendar ─────────────────────────────────────────────
@@ -1977,7 +1977,7 @@ function renderNotesPage(t) {
     for (const key of keys) {
       const labelText = key === '__nodate' ? '無日期關聯' : formatNoteDateLabel(key, t);
       notesHtml += `<div class="notes-date-group"><div class="notes-date-label">${_icoDate(13)} ${esc(labelText)}</div></div>`;
-      const grp = [...groups[key]].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const grp = [...groups[key]].sort((a, b) => String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
       for (const note of grp) notesHtml += renderNoteCard(note, identity);
     }
   }
