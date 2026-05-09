@@ -1526,7 +1526,7 @@ function openTrip(idx) {
   document.getElementById('headerTitle').textContent = t.title;
   document.getElementById('calBtn').style.display = 'none';
   document.getElementById('moreBtnWrap').style.display = 'none';
-  document.getElementById('notesBtn').style.display = shareMode ? 'flex' : (getGasUrl() ? 'flex' : 'none');
+  document.getElementById('notesBtn').style.display = (shareMode && getGasUrl()) ? 'flex' : 'none';
   closeDrawer();
 
   const flag = getFlag(t.title);
