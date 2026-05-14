@@ -17,7 +17,7 @@
         link.remove();
       } else {
         // Android/其他: blob manifest 可正常使用，設正確的 start_url
-        const m = {"name":"旅行規劃站","short_name":"旅行","description":"旅遊行程規劃，隨時查看","start_url":"./index.html?share="+encodeURIComponent(shareParam),"display":"standalone","orientation":"portrait","theme_color":"#1e40af","background_color":"#ffffff","icons":[{"src":"app-icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]};
+        const m = {"name":"旅行規劃站","short_name":"旅行","description":"旅遊行程規劃，隨時查看","start_url":"./index.html?share="+encodeURIComponent(shareParam),"display":"standalone","orientation":"portrait","theme_color":"#134074","background_color":"#ffffff","icons":[{"src":"app-icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]};
         const blob = new Blob([JSON.stringify(m)], {type: 'application/manifest+json'});
         link.href = URL.createObjectURL(blob);
       }
@@ -28,7 +28,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="旅行規劃站">
   <link rel="apple-touch-icon" href="app-icon.png?v=6">
-  <meta name="theme-color" content="#1e40af">
+  <meta name="theme-color" content="#134074">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -53,7 +53,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: #1e40af;
+      background: #134074;
       color: #fff;
       padding: 14px 18px;
       display: flex;
@@ -102,19 +102,20 @@
       z-index: 201;
       transform: translateX(-100%);
       transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-      overflow-y: auto;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       padding-bottom: 0;
     }
+    #drawerList { flex: 1; overflow-y: auto; }
     .drawer-footer {
-      position: sticky;
-      bottom: 0;
+      flex-shrink: 0;
       background: #fff;
       border-top: 1px solid #e2e8f0;
       padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 8px;
     }
     .drawer-version { font-size: 11px; color: #94a3b8; }
     .drawer-refresh-btn {
@@ -132,7 +133,7 @@
     .drawer-refresh-btn:active { background: #dbeafe; }
 
     .today-card {
-      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+      background: #8da9c4;
       color: #fff;
       border-radius: 14px;
       padding: 14px 16px;
@@ -158,7 +159,7 @@
     .drawer.open { transform: translateX(0); }
 
     .drawer-head {
-      background: #1e40af;
+      background: #134074;
       color: #fff;
       padding: 20px 18px 16px;
       font-size: 18px;
@@ -241,8 +242,8 @@
     .badge-done     { background: #f1f5f9; color: #64748b; }
 
     .trip-card.ongoing {
-      background: #f0fdf4;
-      border-color: #86efac;
+      background: #e6ebef;
+      border-color: #00b1e1;
     }
 
     .trip-card.done {
@@ -260,7 +261,7 @@
       margin-left: 6px;
       font-weight: 600;
     }
-    .trip-card.ongoing .countdown { color: #15803d; }
+    .trip-card.ongoing .countdown { color: #0081a3; }
 
     /* ── Detail Header ── */
     .detail-intro {
@@ -290,7 +291,7 @@
     }
 
     .day-header {
-      background: #1e40af;
+      background: #134074;
       color: #fff;
       padding: 9px 14px;
       display: flex;
@@ -425,7 +426,7 @@
     .orders-connect-btn {
       display: inline-block; margin-top: 10px;
       padding: 8px 20px;
-      background: #1e40af; color: #fff;
+      background: #134074; color: #fff;
       border: none; border-radius: 8px;
       font-size: 14px; cursor: pointer;
     }
@@ -581,7 +582,7 @@
       color: #334155;
     }
     .cal-today-num {
-      background: #1e40af;
+      background: #134074;
       color: #fff;
       font-weight: 700;
     }
@@ -603,12 +604,12 @@
     .cal-desc        { font-size: 9px; color: #94a3b8; text-align: center; line-height: 1.2; margin-bottom: 2px; overflow: hidden; white-space: nowrap; }
 
     /* ── Notes ── */
-    #notesBtn { display:none;align-items:center;gap:4px;padding:5px 10px;background:#1e40af;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap; }
+    #notesBtn { display:none;align-items:center;gap:4px;padding:5px 10px;background:#134074;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap; }
     #notesBtn:active { opacity:.8; }
 
     .notes-filter { display:flex;gap:8px;padding:12px 16px 8px;border-bottom:1px solid #f1f5f9;position:sticky;top:54px;background:#fff;z-index:10; }
     .notes-filter-btn { padding:5px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;cursor:pointer; }
-    .notes-filter-btn.active { background:#1e40af;color:#fff;border-color:#1e40af; }
+    .notes-filter-btn.active { background:#134074;color:#fff;border-color:#134074; }
 
     .notes-date-group { padding:14px 16px 4px; }
     .notes-date-label { font-size:13px;font-weight:700;color:#64748b;letter-spacing:.02em; }
@@ -630,28 +631,28 @@
     .note-sync-failed  { background:#ef4444; }
     @keyframes syncpulse { 0%,100%{opacity:1}50%{opacity:.3} }
 
-    .fab { position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:#1e40af;color:#fff;border-radius:50%;border:none;font-size:28px;box-shadow:0 4px 16px rgba(30,64,175,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50; }
+    .fab { position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:#134074;color:#fff;border-radius:50%;border:none;font-size:28px;box-shadow:0 4px 16px rgba(30,64,175,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50; }
     .fab:active { transform:scale(.93); }
 
     .fullscreen-overlay { position:fixed;inset:0;background:#fff;z-index:150;display:flex;flex-direction:column;overflow:hidden; }
     .overlay-header { display:flex;align-items:center;padding:0 12px;height:54px;border-bottom:1px solid #f1f5f9;flex-shrink:0;background:#fff; }
     .overlay-cancel { font-size:15px;color:#64748b;background:none;border:none;cursor:pointer;padding:8px 6px; }
     .overlay-title  { flex:1;text-align:center;font-size:16px;font-weight:700;color:#1e293b; }
-    .overlay-save   { font-size:15px;font-weight:700;color:#1e40af;background:none;border:none;cursor:pointer;padding:8px 6px; }
+    .overlay-save   { font-size:15px;font-weight:700;color:#134074;background:none;border:none;cursor:pointer;padding:8px 6px; }
     .overlay-body   { flex:1;overflow-y:auto;padding:16px; }
 
     .form-section-label { font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;margin-top:16px; }
     .form-section-label:first-child { margin-top:0; }
     .form-cat-btns { display:flex;gap:8px;margin-bottom:4px; }
     .form-cat-btn { flex:1;padding:9px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:14px;cursor:pointer;text-align:center; }
-    .form-cat-btn.active { border-color:#1e40af;background:#eff6ff;color:#1e40af;font-weight:600; }
+    .form-cat-btn.active { border-color:#134074;background:#eff6ff;color:#134074;font-weight:600; }
     .form-date-row { display:flex;align-items:center;gap:10px; }
     .form-select { flex:1;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;background:#fff; }
     .form-checkbox-label { display:flex;align-items:center;gap:6px;font-size:13px;color:#64748b;white-space:nowrap;cursor:pointer; }
     .form-textarea { width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;line-height:1.6;min-height:120px;resize:none;font-family:inherit; }
-    .form-textarea:focus { outline:none;border-color:#1e40af; }
+    .form-textarea:focus { outline:none;border-color:#134074; }
     .form-input { width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px; }
-    .form-input:focus { outline:none;border-color:#1e40af; }
+    .form-input:focus { outline:none;border-color:#134074; }
     .form-row { display:flex;gap:8px; }
     .form-add-photo { display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px dashed #cbd5e1;border-radius:10px;color:#64748b;font-size:14px;cursor:pointer;background:none;width:100%;box-sizing:border-box; }
     .form-photo-preview { display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px; }
@@ -660,12 +661,12 @@
     .form-photo-remove { position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:#ef4444;color:#fff;border-radius:50%;border:none;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer; }
     .form-identity-row { display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #f1f5f9;margin-top:16px; }
     .form-identity-label { font-size:13px;color:#64748b; }
-    .form-identity-name { font-size:13px;font-weight:700;color:#1e40af;cursor:pointer; }
+    .form-identity-name { font-size:13px;font-weight:700;color:#134074;cursor:pointer; }
 
     .identity-option { display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1.5px solid #e2e8f0;margin-bottom:8px;cursor:pointer;background:#fff; }
-    .identity-option.selected { border-color:#1e40af;background:#eff6ff; }
+    .identity-option.selected { border-color:#134074;background:#eff6ff; }
     .identity-radio { width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-    .identity-radio.checked { border-color:#1e40af;background:#1e40af; }
+    .identity-radio.checked { border-color:#134074;background:#134074; }
     .identity-radio.checked::after { content:'';width:6px;height:6px;background:#fff;border-radius:50%;display:block; }
     .identity-name { font-size:15px;color:#1e293b; }
 
@@ -732,7 +733,7 @@
 
       <div style="display:flex;gap:10px;">
         <button onclick="saveSettingsAll()"
-          style="flex:1;padding:10px;background:#1e40af;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">儲存</button>
+          style="flex:1;padding:10px;background:#134074;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">儲存</button>
         <button onclick="closeSettings()"
           style="flex:1;padding:10px;background:#f1f5f9;color:#374151;border:none;border-radius:10px;font-size:14px;cursor:pointer;">關閉</button>
       </div>
@@ -2001,7 +2002,7 @@ function showIdentityPicker(shareInfo, token, onDone) {
               value="${esc(customVal)}">
           </div>
         </div>
-        <button id="confirmIdentityBtn" style="width:100%;padding:13px;background:#1e40af;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px">確認進入</button>
+        <button id="confirmIdentityBtn" style="width:100%;padding:13px;background:#134074;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px">確認進入</button>
       </div>`;
 
     el.querySelectorAll('.identity-option').forEach(div => {
