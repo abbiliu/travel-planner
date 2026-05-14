@@ -1809,7 +1809,7 @@ async function init() {
     const allSheetProps = meta.sheets.map(s => s.properties);
     const sharesProps = allSheetProps.find(p => p.title === '_shares');
     const configProps = allSheetProps.find(p => p.title === '_config');
-    const sheetProps  = allSheetProps.filter(p => !p.title.startsWith('_'));
+    const sheetProps  = allSheetProps.filter(p => /^\d{4}_/.test(p.title));
 
     if (configProps) {
       const cfgData = await api(`/values/${encodeURIComponent('_config')}!A:B`);
