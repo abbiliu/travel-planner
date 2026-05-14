@@ -1763,18 +1763,13 @@ async function refreshApp() {
   if (btn) btn.disabled = true;
   if (icon) icon.classList.add('spinning');
 
-  await new Promise(r => setTimeout(r, 300));
+  await new Promise(r => setTimeout(r, 450));
   closeDrawer();
-
-  const content = document.getElementById('content');
-  content.style.opacity = '0.3';
-  content.style.transition = 'opacity 0.18s';
+  setContent('<div class="center-msg"><div class="spinner"></div>重新整理中⋯</div>');
 
   try {
     await init();
   } finally {
-    content.style.opacity = '';
-    content.style.transition = '';
     if (icon) icon.classList.remove('spinning');
     if (btn) btn.disabled = false;
   }
