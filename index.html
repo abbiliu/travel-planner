@@ -133,6 +133,8 @@
       gap: 4px;
     }
     .drawer-refresh-btn:active { background: #dbeafe; }
+    .refresh-spin { display: inline-block; }
+    .refresh-spin.spinning { animation: spin 0.5s linear infinite; }
 
     .today-card {
       background-image: linear-gradient(to top, #bdc2e8 0%, #bdc2e8 1%, #e6dee9 100%);
@@ -747,7 +749,7 @@
     <div id="drawerList"></div>
     <div class="drawer-footer">
       <span class="drawer-version">v1.5</span>
-      <button class="drawer-refresh-btn" onclick="refreshApp()">↻ 重新整理</button>
+      <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
 
@@ -1755,9 +1757,27 @@ function closeDrawer() {
   document.getElementById('overlay').classList.remove('open');
 }
 
-function refreshApp() {
+async function refreshApp() {
+  const btn = document.querySelector('.drawer-refresh-btn');
+  const icon = btn?.querySelector('.refresh-spin');
+  if (btn) btn.disabled = true;
+  if (icon) icon.classList.add('spinning');
+
+  await new Promise(r => setTimeout(r, 300));
   closeDrawer();
-  init();
+
+  const content = document.getElementById('content');
+  content.style.opacity = '0.3';
+  content.style.transition = 'opacity 0.18s';
+
+  try {
+    await init();
+  } finally {
+    content.style.opacity = '';
+    content.style.transition = '';
+    if (icon) icon.classList.remove('spinning');
+    if (btn) btn.disabled = false;
+  }
 }
 
 function todayCardHTML() {
