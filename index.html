@@ -1765,7 +1765,7 @@ async function refreshApp() {
 
   await new Promise(r => setTimeout(r, 450));
   closeDrawer();
-  setContent('<div class="center-msg"><div class="spinner"></div>重新整理中⋯</div>');
+  setContent('<div class="center-msg"><img src="./loading.svg" style="width:140px;height:140px"></div>');
 
   try {
     await init();
