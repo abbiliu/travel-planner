@@ -150,7 +150,7 @@
       opacity: 0.75;
       margin-bottom: 4px;
     }
-    .today-card-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; color: #000; }
+    .today-card-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; color: #5D1C6A; }
     .today-card-day { font-size: 12px; color: #555; margin-bottom: 10px; }
     .today-card-acts { display: flex; flex-direction: column; gap: 5px; }
     .today-card-act { font-size: 13px; display: flex; gap: 6px; line-height: 1.4; color: #000; }
@@ -292,7 +292,7 @@
     }
 
     .day-header {
-      background: #134074;
+      background: #1155a9;
       color: #fff;
       padding: 9px 14px;
       display: flex;
@@ -1307,7 +1307,7 @@ function buildTrip(props, rows) {
 function getFlag(title) {
   const map = [
     [/沖繩|東京|富士|北海道|京都|大阪|名古屋|福岡|札幌|留壽都|軽井澤|輕井澤|日本|奈良|廣島|神戶/, '🇯🇵'],
-    [/日月潭|台灣|台北|台南|台中|墾丁|花蓮|阿里山|澎湖|九份|農曆年/, '🇹🇼'],
+    [/日月潭|台灣|臺灣|台北|臺北|新北|桃園|台中|臺中|台南|臺南|高雄|基隆|新竹|苗栗|彰化|南投|雲林|嘉義|屏東|台東|臺東|花蓮|澎湖|金門|馬祖|連江|宜蘭|墾丁|阿里山|九份|農曆年/, '🇹🇼'],
     [/峴港|河內|胡志明|越南|富國|會安|大叻/, '🇻🇳'],
     [/宿霧|菲律賓|長灘|巴拉望/, '🇵🇭'],
     [/韓國|首爾|釜山|濟州/, '🇰🇷'],
@@ -1769,7 +1769,6 @@ function todayCardHTML() {
   const idx = trips.indexOf(ongoing);
   const validDays = ongoing.days.filter(d => d.date);
   const dayNum = validDays.indexOf(dayEntry) + 1;
-  const flag = getFlag(ongoing.title);
   let actsHtml;
   const shown = dayEntry.acts.slice(0, 4);
   const extra = dayEntry.acts.length - shown.length;
@@ -1786,7 +1785,7 @@ function todayCardHTML() {
   }
   return `<div class="today-card" onclick="openTrip(${idx})">
     <div class="today-card-header">今日行程</div>
-    <div class="today-card-title">${flag} ${esc(ongoing.title)}</div>
+    <div class="today-card-title">${esc(ongoing.title)}</div>
     <div class="today-card-day">第 ${dayNum} 天 · ${dayEntry.dateLabel}</div>
     ${actsHtml}
   </div>`;
