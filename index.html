@@ -103,8 +103,58 @@
       transform: translateX(-100%);
       transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
       overflow-y: auto;
-      padding-bottom: 24px;
+      padding-bottom: 0;
     }
+    .drawer-footer {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .drawer-version { font-size: 11px; color: #94a3b8; }
+    .drawer-refresh-btn {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      color: #2563eb;
+      font-size: 13px;
+      padding: 6px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .drawer-refresh-btn:active { background: #dbeafe; }
+
+    .today-card {
+      background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      active-transform: scale(0.98);
+    }
+    .today-card-header {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.75;
+      margin-bottom: 4px;
+    }
+    .today-card-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .today-card-day { font-size: 12px; opacity: 0.8; margin-bottom: 10px; }
+    .today-card-acts { display: flex; flex-direction: column; gap: 5px; }
+    .today-card-act { font-size: 13px; display: flex; gap: 6px; line-height: 1.4; }
+    .today-card-act-dot { opacity: 0.55; flex-shrink: 0; }
+    .today-card-act-detail { opacity: 0.65; font-size: 12px; }
+    .today-card-empty { font-size: 13px; opacity: 0.65; }
     .drawer.open { transform: translateX(0); }
 
     .drawer-head {
@@ -693,6 +743,10 @@
   <div class="drawer" id="drawer">
     <div class="drawer-head">✈️ 旅行規劃站</div>
     <div id="drawerList"></div>
+    <div class="drawer-footer">
+      <span class="drawer-version">v1.5</span>
+      <button class="drawer-refresh-btn" onclick="refreshApp()">↻ 重新整理</button>
+    </div>
   </div>
 
   <div id="content">
@@ -1491,6 +1545,9 @@ function goHome() {
 
   let html = '<div class="page">';
 
+  const todayCard = todayCardHTML();
+  if (todayCard) html += todayCard;
+
   if (active.length) {
     html += '<div class="section-label">即將出發</div>';
     active.forEach(t => { html += cardHTML(t); });
@@ -1694,6 +1751,43 @@ function toggleDrawer() {
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('overlay').classList.remove('open');
+}
+
+function refreshApp() {
+  closeDrawer();
+  init();
+}
+
+function todayCardHTML() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ongoing = trips.find(t => t.status === 'ongoing');
+  if (!ongoing) return '';
+  const dayEntry = ongoing.days.find(d => d.date && d.date.getTime() === today.getTime());
+  if (!dayEntry) return '';
+  const idx = trips.indexOf(ongoing);
+  const validDays = ongoing.days.filter(d => d.date);
+  const dayNum = validDays.indexOf(dayEntry) + 1;
+  const flag = getFlag(ongoing.title);
+  let actsHtml;
+  const shown = dayEntry.acts.slice(0, 4);
+  const extra = dayEntry.acts.length - shown.length;
+  if (shown.length > 0) {
+    actsHtml = '<div class="today-card-acts">' +
+      shown.map(a => `<div class="today-card-act">
+        <span class="today-card-act-dot">•</span>
+        <span>${esc(a.act)}${a.detail ? ` <span class="today-card-act-detail">${esc(a.detail)}</span>` : ''}</span>
+      </div>`).join('') +
+      (extra > 0 ? `<div class="today-card-empty">還有 ${extra} 項…</div>` : '') +
+      '</div>';
+  } else {
+    actsHtml = '<div class="today-card-empty">今日無安排</div>';
+  }
+  return `<div class="today-card" onclick="openTrip(${idx})">
+    <div class="today-card-header">今日行程</div>
+    <div class="today-card-title">${flag} ${esc(ongoing.title)}</div>
+    <div class="today-card-day">第 ${dayNum} 天 · ${dayEntry.dateLabel}</div>
+    ${actsHtml}
+  </div>`;
 }
 
 // ── Init ─────────────────────────────────────────────────
