@@ -117,6 +117,8 @@
       align-items: center;
       justify-content: space-between;
     }
+    .flight-icon { height: 20px; width: 20px; vertical-align: middle; display: inline-block; }
+    .flight-icon-inv { filter: brightness(0) invert(1); }
     .drawer-version { font-size: 11px; color: #94a3b8; }
     .drawer-refresh-btn {
       background: #eff6ff;
@@ -148,13 +150,13 @@
       opacity: 0.75;
       margin-bottom: 4px;
     }
-    .today-card-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-    .today-card-day { font-size: 12px; opacity: 0.8; margin-bottom: 10px; }
+    .today-card-title { font-size: 16px; font-weight: 700; margin-bottom: 2px; color: #000; }
+    .today-card-day { font-size: 12px; color: #555; margin-bottom: 10px; }
     .today-card-acts { display: flex; flex-direction: column; gap: 5px; }
-    .today-card-act { font-size: 13px; display: flex; gap: 6px; line-height: 1.4; }
-    .today-card-act-dot { opacity: 0.55; flex-shrink: 0; }
-    .today-card-act-detail { opacity: 0.65; font-size: 12px; }
-    .today-card-empty { font-size: 13px; opacity: 0.65; }
+    .today-card-act { font-size: 13px; display: flex; gap: 6px; line-height: 1.4; color: #000; }
+    .today-card-act-dot { color: #888; flex-shrink: 0; }
+    .today-card-act-detail { color: #666; font-size: 12px; }
+    .today-card-empty { font-size: 13px; color: #666; }
     .drawer.open { transform: translateX(0); }
 
     .drawer-head {
@@ -242,7 +244,7 @@
 
     .trip-card.ongoing {
       background: #FFF6DE;
-      border-color: #00b1e1;
+      border-color: #ee6c4d;
     }
 
     .trip-card.done {
@@ -683,7 +685,7 @@
     <button class="icon-btn" id="backBtn" onclick="goHome()" style="display:none">
       <span>‹</span><span class="back-btn-text">返回</span>
     </button>
-    <span class="header-title" id="headerTitle">✈️ 旅行規劃站</span>
+    <span class="header-title" id="headerTitle"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</span>
     <button class="icon-btn" id="calBtn" onclick="openCalendar()" title="月曆">
       <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="currentColor">
         <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z"/>
@@ -741,7 +743,7 @@
 
   <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
   <div class="drawer" id="drawer">
-    <div class="drawer-head">✈️ 旅行規劃站</div>
+    <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
       <span class="drawer-version">v1.5</span>
@@ -1321,7 +1323,7 @@ function getFlag(title) {
   for (const [re, flag] of map) {
     if (re.test(title)) return flag;
   }
-  return '✈️';
+  return '<img src="./flight.svg" class="flight-icon" alt="✈️">';
 }
 
 function getCountdown(t) {
@@ -1532,7 +1534,7 @@ function goHome() {
   document.querySelector('.fab')?.remove();
   if (!shareMode) document.getElementById('menuBtn').style.display = '';
   document.getElementById('backBtn').style.display = 'none';
-  document.getElementById('headerTitle').textContent = '✈️ 旅行規劃站';
+  document.getElementById('headerTitle').innerHTML = '<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站';
   document.getElementById('notesBtn').style.display = 'none';
   document.getElementById('calBtn').style.display = '';
   document.getElementById('moreBtnWrap').style.display = shareMode ? 'none' : '';
@@ -1850,7 +1852,7 @@ async function init() {
       }
       const label = shareConfig.displayName || '旅行行程';
       document.title = label;
-      document.getElementById('headerTitle').textContent = `✈️ ${label}`;
+      document.getElementById('headerTitle').innerHTML = `<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> ${esc(label)}`;
       document.getElementById('menuBtn').style.display = 'none';
     } else {
       renderDrawer();
