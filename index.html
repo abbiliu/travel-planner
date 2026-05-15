@@ -1941,19 +1941,36 @@ async function importSheetB(force = false) {
     const citiesRaw  = (row[iCity] || '').trim();
     const note       = row[iNote]  ? row[iNote].trim() : '';
     const days       = parseInt(row[iDays]) || 0;
-    const code       = fpCountryCode(countryRaw);
-    if (countryRaw && !code) unmapped.push(countryRaw);
+
+    // 支援一欄多國（逗號或頓號分隔）
+    const countryNames = countryRaw
+      ? countryRaw.split(/[、,，]+/).map(s => s.trim()).filter(Boolean)
+      : [];
+    const countryCodes = countryNames.map(n => {
+      const c = fpCountryCode(n);
+      if (!c) unmapped.push(n);
+      return { name: n, code: c };
+    });
 
     const cityNames = citiesRaw
       ? citiesRaw.split(/[、,，\/／]+/).map(s => s.trim()).filter(Boolean)
       : [];
 
-    trips.push({ tripKey, source: 'sheet_b', startDate, endDate, duration: days,
-                 countryCode: code, countryRaw, note });
-    cityNames.forEach(city => {
-      visits.push({ tripKey, source: 'sheet_b', countryCode: code, countryRaw,
-                    cityNameRaw: city, startDate, endDate });
+    // 每個國家產生一筆 trip（多國旅程各自計次）
+    countryCodes.forEach(({ name, code }) => {
+      const key = `${tripKey}_${code || name}`;
+      trips.push({ tripKey: key, source: 'sheet_b', startDate, endDate, duration: days,
+                   countryCode: code, countryRaw: name, note });
+      cityNames.forEach(city => {
+        visits.push({ tripKey: key, source: 'sheet_b', countryCode: code, countryRaw: name,
+                      cityNameRaw: city, startDate, endDate });
+      });
     });
+    // 若無國家資訊仍保留旅程
+    if (countryCodes.length === 0) {
+      trips.push({ tripKey, source: 'sheet_b', startDate, endDate, duration: days,
+                   countryCode: null, countryRaw, note });
+    }
   }
 
   const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]');

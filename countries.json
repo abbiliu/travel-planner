@@ -1,5 +1,8 @@
 [
   {"code":"TW","name_zh":"台灣","name_en":"Taiwan","continent":"亞洲"},
+  {"code":"HK","name_zh":"香港","name_en":"Hong Kong","continent":"亞洲"},
+  {"code":"MO","name_zh":"澳門","name_en":"Macau","continent":"亞洲"},
+  {"code":"VA","name_zh":"梵蒂岡","name_en":"Vatican","continent":"歐洲"},
   {"code":"JP","name_zh":"日本","name_en":"Japan","continent":"亞洲"},
   {"code":"KR","name_zh":"韓國","name_en":"South Korea","continent":"亞洲"},
   {"code":"KP","name_zh":"北韓","name_en":"North Korea","continent":"亞洲"},
