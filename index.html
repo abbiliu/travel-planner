@@ -2001,8 +2001,12 @@ async function importSheetB(force = false) {
   }
 
   // 覆蓋式匯入：先移除舊的 sheet_b 資料，再合併新資料（避免重複累加）
-  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]').filter(t => t.source !== 'sheet_b');
-  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]').filter(v => v.source !== 'sheet_b');
+  const newBBases = new Set(trips.map(t => t.tripKey.split('_').slice(0,2).join('_')));
+  // 同時移除 sheet_a 中已被 Sheet B 覆蓋的採納記錄（避免雙重計天）
+  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]')
+    .filter(t => t.source !== 'sheet_b' && !(t.source === 'sheet_a' && newBBases.has(t.tripKey.split('_').slice(0,2).join('_'))));
+  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]')
+    .filter(v => v.source !== 'sheet_b' && !(v.source === 'sheet_a' && newBBases.has(v.tripKey.split('_').slice(0,2).join('_'))));
 
   localStorage.setItem('fp_trips',  JSON.stringify([...existingTrips,  ...trips]));
   localStorage.setItem('fp_visits', JSON.stringify([...existingVisits, ...visits]));
