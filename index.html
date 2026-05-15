@@ -2023,17 +2023,32 @@ async function openWorldMap() {
 
   setContent('<div class="center-msg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="120" height="120" style="display:block;margin:0 auto"><circle stroke-width="2" stroke="#134074" fill="none" r="0" cy="50" cx="50"><animate begin="0s" calcMode="spline" keySplines="0 0.2 0.8 1" keyTimes="0;1" values="0;40" dur="1s" repeatCount="indefinite" attributeName="r"/><animate begin="0s" calcMode="spline" keySplines="0.2 0 0.8 1" keyTimes="0;1" values="1;0" dur="1s" repeatCount="indefinite" attributeName="opacity"/></circle><circle stroke-width="2" stroke="#bdc2e8" fill="none" r="0" cy="50" cx="50"><animate begin="-0.5s" calcMode="spline" keySplines="0 0.2 0.8 1" keyTimes="0;1" values="0;40" dur="1s" repeatCount="indefinite" attributeName="r"/><animate begin="-0.5s" calcMode="spline" keySplines="0.2 0 0.8 1" keyTimes="0;1" values="1;0" dur="1s" repeatCount="indefinite" attributeName="opacity"/></circle></svg></div>');
 
+  const log = [];
+  const setLog = html => setContent(`<div class="fp-page" style="font-size:13px;line-height:2">${html}</div>`);
+
   try {
+    log.push('⏳ 載入國家清單…');
+    setLog(log.join('<br>'));
     await loadFPCountries();
+    log.push(`✅ 國家清單：${FP_COUNTRIES.length} 筆`);
+    setLog(log.join('<br>'));
+
     const hasData = localStorage.getItem('fp_imported_b');
     if (!hasData) {
+      log.push('⏳ 讀取 Sheet B…');
+      setLog(log.join('<br>'));
       const result = await importSheetB();
+      log.push(`✅ 匯入完成：${result.added} 筆旅程，未對應國家 ${result.unmapped?.length ?? 0} 筆`);
+      if (result.unmapped?.length) log.push(`⚠️ 未對應：${result.unmapped.join('、')}`);
+      setLog(log.join('<br>'));
+      await new Promise(r => setTimeout(r, 800));
       renderFootprintDash(result?.unmapped || []);
     } else {
       renderFootprintDash([]);
     }
   } catch(e) {
-    setContent(`<div class="center-msg"><div class="err-icon">⚠️</div><div class="err-msg">${esc(e.message)}</div></div>`);
+    log.push(`❌ 錯誤：${e.message}`);
+    setLog(log.join('<br>') + `<br><button class="fp-import-btn secondary" onclick="fpReimport()" style="margin-top:16px">重新嘗試</button>`);
   }
 }
 
