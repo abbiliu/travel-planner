@@ -2500,8 +2500,6 @@ function fpBuildInferSection() {
     </div>`;
   };
   toReview.forEach(t => { html += renderCard(t); });
-  accepted.forEach(t => { html += renderCard(t); });
-  skipped.forEach(t => { html += renderCard(t); });
   return html;
 }
 
