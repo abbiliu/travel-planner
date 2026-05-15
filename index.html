@@ -2415,11 +2415,18 @@ function fpClearInferErrors() {
 async function fpInferTrip(trip) {
   const cache = fpGetLLMCache();
   if (cache[trip.name] && !cache[trip.name].error) return cache[trip.name];
-  const params = new URLSearchParams({ action: 'inferDestination', title: trip.title, startDate: trip.startDate, endDate: trip.endDate });
-  const res = await fetch(FP_GAS_URL + '?' + params.toString());
-  const data = await res.json();
-  if (!data.success) throw new Error(data.error?.message || '伺服器錯誤');
-  cache[trip.name] = { ...data.data, tripMeta: trip, inferredAt: new Date().toISOString() };
+  const apiKey = localStorage.getItem('openai_key');
+  if (!apiKey) throw new Error('nokey');
+  const prompt = `判斷這個旅行行程的目的地。\n行程：${trip.title}（${trip.startDate} ~ ${trip.endDate}）\n\n請回傳 JSON：{"countries":[{"code":"JP","name_zh":"日本"}],"cities":[{"name_zh":"東京","country_code":"JP"}],"confidence":0.95,"reasoning":"說明"}`;
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], response_format: { type: 'json_object' }, max_tokens: 300 })
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+  const json = await res.json();
+  const data = JSON.parse(json.choices[0].message.content);
+  cache[trip.name] = { ...data, tripMeta: trip, inferredAt: new Date().toISOString() };
   fpSaveLLMCache(cache);
   return cache[trip.name];
 }
