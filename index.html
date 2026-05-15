@@ -2409,10 +2409,8 @@ function fpSaveLLMCache(c) { localStorage.setItem('footprint_llm_cache', JSON.st
 async function fpInferTrip(trip) {
   const cache = fpGetLLMCache();
   if (cache[trip.name] && !cache[trip.name].error) return cache[trip.name];
-  const res = await fetch(FP_GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'inferDestination', title: trip.title, startDate: trip.startDate, endDate: trip.endDate })
-  });
+  const params = new URLSearchParams({ action: 'inferDestination', title: trip.title, startDate: trip.startDate, endDate: trip.endDate });
+  const res = await fetch(FP_GAS_URL + '?' + params.toString());
   const data = await res.json();
   if (!data.success) throw new Error(data.error?.message || '伺服器錯誤');
   cache[trip.name] = { ...data.data, tripMeta: trip, inferredAt: new Date().toISOString() };
