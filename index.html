@@ -260,6 +260,31 @@
     .fp-import-btn.secondary {
       background: #f1f5f9; color: #334155; margin-top: 6px;
     }
+    .fp-infer-stats { font-size: 13px; color: #64748b; margin: 4px 0 10px; }
+    .fp-infer-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 8px;
+    }
+    .fp-infer-card.accepted { border-color: #86efac; background: #f0fdf4; }
+    .fp-infer-card.skipped { opacity: 0.6; }
+    .fp-infer-card-header {
+      display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;
+    }
+    .fp-infer-card-title { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .fp-infer-card-date { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .fp-infer-card-result {
+      font-size: 13px; color: #334155; margin: 6px 0;
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .fp-conf-badge { font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .fp-infer-card-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .fp-card-btn {
+      padding: 5px 14px; border-radius: 8px; border: none;
+      font-size: 13px; cursor: pointer; font-weight: 600;
+    }
+    .fp-card-btn.accept { background: #134074; color: #fff; }
+    .fp-card-btn.skip   { background: #f1f5f9; color: #64748b; }
+    .fp-card-btn.reset  { background: #f1f5f9; color: #94a3b8; font-weight: 400; font-size: 12px; }
 
     /* ── Pages ── */
     .page { padding: 16px; }
@@ -2041,6 +2066,7 @@ function renderFootprintDash(unmapped) {
   const stats = fpBuildStats();
   const totalCountries = 195;
   const pct = stats.countries ? ((stats.countries / totalCountries) * 100).toFixed(1) : 0;
+  const hasAcceptedA = (JSON.parse(localStorage.getItem('fp_trips') || '[]')).some(t => t.source === 'sheet_a');
 
   let unmappedHtml = '';
   if (unmapped.length) {
@@ -2071,7 +2097,7 @@ function renderFootprintDash(unmapped) {
   const html = `<div class="fp-page">
     <div class="fp-hero">
       <div class="fp-hero-title">🌏 我的世界足跡</div>
-      <div class="fp-hero-sub">根據「過去出國紀錄」統計</div>
+      <div class="fp-hero-sub">${hasAcceptedA ? 'Sheet B + 行程規劃（已採納）合併統計' : '根據「過去出國紀錄」統計'}</div>
     </div>
 
     <div class="fp-stats-grid">
@@ -2099,6 +2125,8 @@ function renderFootprintDash(unmapped) {
 
     ${unmappedHtml}
 
+    ${fpBuildInferSection()}
+
     <div class="fp-section-label">造訪國家（依次數）</div>
     ${countriesHtml}
 
@@ -2113,6 +2141,219 @@ async function fpReimport() {
   localStorage.removeItem('fp_trips');
   localStorage.removeItem('fp_visits');
   await openWorldMap();
+}
+
+// ── Phase 3: Sheet A LLM Inference ──────────────────────────────────
+
+function fpDateStr(d) {
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+function fpToIsoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fpGetSheetATrips() {
+  return trips
+    .filter(t => t.status === 'done')
+    .map(t => ({
+      name: t.name, title: t.title, year: t.year,
+      startDate: fpToIsoDate(t.start), endDate: fpToIsoDate(t.end),
+      tripKeyBase: `${fpDateStr(t.start)}_${fpDateStr(t.end)}`,
+    }));
+}
+
+function fpGetBTripKeyBases() {
+  return new Set(
+    (JSON.parse(localStorage.getItem('fp_trips') || '[]'))
+      .filter(t => t.source === 'sheet_b')
+      .map(t => { const p = t.tripKey.split('_'); return `${p[0]}_${p[1]}`; })
+  );
+}
+
+function fpGetLLMCache() {
+  try { return JSON.parse(localStorage.getItem('footprint_llm_cache') || '{}'); } catch(_) { return {}; }
+}
+function fpSaveLLMCache(c) { localStorage.setItem('footprint_llm_cache', JSON.stringify(c)); }
+
+async function fpInferTrip(trip) {
+  const cache = fpGetLLMCache();
+  if (cache[trip.name] && !cache[trip.name].error) return cache[trip.name];
+  const apiKey = localStorage.getItem('openai_key') || '';
+  if (!apiKey) throw new Error('nokey');
+  const prompt = `你是旅遊資料推論助理。根據旅程名稱判斷目的地國家和主要城市。\n旅程名稱：${trip.title}\n日期：${trip.startDate} ～ ${trip.endDate}\n只回傳 JSON：{"countries":[{"code":"JP","name_zh":"日本"}],"cities":[{"name_zh":"東京","country_code":"JP"}],"confidence":0.95}\n規則：台灣旅程 code 用 "TW"；無法判斷時 confidence<0.3，countries/cities 留空。`;
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' }, temperature: 0.1, max_tokens: 300 })
+  });
+  if (!res.ok) throw new Error(`OpenAI ${res.status}`);
+  const data = await res.json();
+  const result = JSON.parse(data.choices[0].message.content);
+  cache[trip.name] = { ...result, tripMeta: trip, inferredAt: new Date().toISOString() };
+  fpSaveLLMCache(cache);
+  return cache[trip.name];
+}
+
+function fpSaveAccepted(tripName) {
+  const cache = fpGetLLMCache();
+  const entry = cache[tripName];
+  if (!entry?.tripMeta) return;
+  const trip = entry.tripMeta;
+  const countries = entry.countries || [];
+  const cities    = entry.cities    || [];
+  const duration  = trip.startDate && trip.endDate
+    ? Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1 : 0;
+  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]');
+  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]');
+  const existingKeys   = new Set(existingTrips.map(t => t.tripKey));
+  countries.forEach(({ code, name_zh }) => {
+    const key = `${trip.tripKeyBase}_${code || name_zh}`;
+    if (existingKeys.has(key)) return;
+    existingTrips.push({ tripKey: key, source: 'sheet_a', startDate: trip.startDate,
+      endDate: trip.endDate, duration, countryCode: code, countryRaw: name_zh,
+      title: trip.title, note: '' });
+    existingKeys.add(key);
+    cities.filter(c => c.country_code === code).forEach(city => {
+      existingVisits.push({ tripKey: key, source: 'sheet_a', countryCode: code,
+        countryRaw: name_zh, cityNameRaw: city.name_zh,
+        startDate: trip.startDate, endDate: trip.endDate });
+    });
+  });
+  localStorage.setItem('fp_trips',  JSON.stringify(existingTrips));
+  localStorage.setItem('fp_visits', JSON.stringify(existingVisits));
+}
+
+function fpRemoveAccepted(tripName) {
+  const cache = fpGetLLMCache();
+  const base = cache[tripName]?.tripMeta?.tripKeyBase;
+  if (!base) return;
+  const ts = JSON.parse(localStorage.getItem('fp_trips')  || '[]').filter(t => !(t.source === 'sheet_a' && t.tripKey.startsWith(base)));
+  const vs = JSON.parse(localStorage.getItem('fp_visits') || '[]').filter(v => !(v.source === 'sheet_a' && v.tripKey.startsWith(base)));
+  localStorage.setItem('fp_trips', JSON.stringify(ts));
+  localStorage.setItem('fp_visits', JSON.stringify(vs));
+}
+
+function fpAcceptCard(tripName) {
+  const cache = fpGetLLMCache();
+  if (!cache[tripName]) return;
+  cache[tripName].accepted = true; cache[tripName].skipped = false;
+  fpSaveLLMCache(cache); fpSaveAccepted(tripName); renderFootprintDash([]);
+}
+function fpSkipCard(tripName) {
+  const cache = fpGetLLMCache();
+  cache[tripName] = cache[tripName] || {};
+  cache[tripName].skipped = true; cache[tripName].accepted = false;
+  fpSaveLLMCache(cache); fpRemoveAccepted(tripName); renderFootprintDash([]);
+}
+function fpResetCard(tripName) {
+  const cache = fpGetLLMCache();
+  const wasAccepted = cache[tripName]?.accepted;
+  delete cache[tripName]; fpSaveLLMCache(cache);
+  if (wasAccepted) fpRemoveAccepted(tripName);
+  renderFootprintDash([]);
+}
+
+function fpBatchAccept() {
+  const bKeys = fpGetBTripKeyBases();
+  const cache = fpGetLLMCache();
+  fpGetSheetATrips().filter(t => !bKeys.has(t.tripKeyBase)).forEach(t => {
+    const e = cache[t.name];
+    if (!e || e.accepted || e.skipped || e.error) return;
+    if ((e.confidence || 0) >= 0.8) {
+      cache[t.name].accepted = true; cache[t.name].skipped = false;
+      fpSaveLLMCache(cache); fpSaveAccepted(t.name);
+    }
+  });
+  renderFootprintDash([]);
+}
+
+async function fpRunInference() {
+  const apiKey = localStorage.getItem('openai_key') || '';
+  const infoEl = document.getElementById('fp-infer-info');
+  const btnEl  = document.getElementById('fp-infer-btn');
+  if (!apiKey) {
+    if (infoEl) infoEl.innerHTML = '<span style="color:#dc2626">請先在 ⚙️ 設定中填入 OpenAI API Key</span>';
+    return;
+  }
+  const bKeys   = fpGetBTripKeyBases();
+  const cache   = fpGetLLMCache();
+  const pending = fpGetSheetATrips()
+    .filter(t => !bKeys.has(t.tripKeyBase))
+    .filter(t => !cache[t.name] || cache[t.name].error);
+  if (!pending.length) { renderFootprintDash([]); return; }
+  if (btnEl) btnEl.disabled = true;
+  for (let i = 0; i < pending.length; i++) {
+    if (infoEl) infoEl.textContent = `推論中... ${i+1}/${pending.length}`;
+    try { await fpInferTrip(pending[i]); } catch(e) {
+      const c = fpGetLLMCache();
+      c[pending[i].name] = { error: e.message === 'nokey' ? '未設定 OpenAI Key' : e.message, tripMeta: pending[i] };
+      fpSaveLLMCache(c);
+    }
+  }
+  renderFootprintDash([]);
+}
+
+function fpBuildInferSection() {
+  const bKeys     = fpGetBTripKeyBases();
+  const cache     = fpGetLLMCache();
+  const sheetAAll = fpGetSheetATrips().filter(t => !bKeys.has(t.tripKeyBase));
+  if (!sheetAAll.length) return '';
+  const withResult = sheetAAll.filter(t => cache[t.name] && !cache[t.name].error);
+  const pending    = sheetAAll.filter(t => !cache[t.name] || cache[t.name].error);
+  const accepted   = withResult.filter(t => cache[t.name]?.accepted);
+  const skipped    = withResult.filter(t => cache[t.name]?.skipped);
+  const toReview   = withResult.filter(t => !cache[t.name]?.accepted && !cache[t.name]?.skipped);
+  const highConf   = toReview.filter(t => (cache[t.name]?.confidence || 0) >= 0.8);
+
+  let html = `<div class="fp-section-label">🗓️ 行程規劃紀錄（Sheet A）</div>`;
+  html += `<div class="fp-infer-stats">共 ${sheetAAll.length} 筆 · 已採納 ${accepted.length} · 已跳過 ${skipped.length} · 待確認 ${toReview.length}${pending.length ? ` · 未推論 ${pending.length}` : ''}</div>`;
+  if (pending.length) {
+    html += `<div style="margin:10px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="fp-import-btn" id="fp-infer-btn" onclick="fpRunInference()" style="margin:0;width:auto;padding:10px 18px;font-size:14px">⚡ 推論 ${pending.length} 筆</button>
+      <span id="fp-infer-info" style="color:#64748b;font-size:13px"></span>
+    </div>`;
+  }
+  if (highConf.length) {
+    html += `<div style="margin:6px 0"><button class="fp-import-btn secondary" onclick="fpBatchAccept()" style="margin:0;padding:9px 14px;font-size:13px;width:auto">✓ 批次採納高信心（${highConf.length} 筆 ≥80%）</button></div>`;
+  }
+  const renderCard = (t) => {
+    const e = cache[t.name]; if (!e) return '';
+    const conf = Math.round((e.confidence || 0) * 100);
+    const confColor = conf >= 80 ? '#15803d' : conf >= 50 ? '#b45309' : '#dc2626';
+    const ctryStr = (e.countries || []).map(c => `${fpCountryEmoji(c.code)} ${c.name_zh}`).join('、') || '（無法判斷）';
+    const cityStr = (e.cities    || []).map(c => c.name_zh).join('、');
+    const dateStr = `${(t.startDate||'').slice(0,7).replace('-','/')} ～ ${(t.endDate||'').slice(5).replace('-','/')}`;
+    let badge = '', actions = '';
+    if (e.accepted) {
+      badge   = `<span style="color:#15803d;font-size:12px;font-weight:700">✓ 已採納</span>`;
+      actions = `<button class="fp-card-btn reset" onclick="fpResetCard('${esc(t.name)}')">取消</button>`;
+    } else if (e.skipped) {
+      badge   = `<span style="color:#94a3b8;font-size:12px">✗ 跳過</span>`;
+      actions = `<button class="fp-card-btn reset" onclick="fpResetCard('${esc(t.name)}')">重置</button>`;
+    } else if (e.error) {
+      badge   = `<span style="color:#dc2626;font-size:12px">⚠️ 錯誤</span>`;
+      actions = `<button class="fp-card-btn reset" onclick="fpResetCard('${esc(t.name)}')">重試</button>`;
+    } else {
+      actions = `<button class="fp-card-btn accept" onclick="fpAcceptCard('${esc(t.name)}')">✓ 採納</button>
+        <button class="fp-card-btn skip" onclick="fpSkipCard('${esc(t.name)}')">✗ 跳過</button>`;
+    }
+    return `<div class="fp-infer-card${e.accepted ? ' accepted' : e.skipped ? ' skipped' : ''}">
+      <div class="fp-infer-card-header">
+        <div><div class="fp-infer-card-title">${esc(t.title)}</div><div class="fp-infer-card-date">${dateStr}</div></div>
+        ${badge}
+      </div>
+      <div class="fp-infer-card-result">
+        <span>${ctryStr}${cityStr ? ` · ${cityStr}` : ''}</span>
+        ${e.error ? `<span style="color:#dc2626;font-size:12px">${esc(e.error)}</span>` : `<span class="fp-conf-badge" style="color:${confColor}">信心 ${conf}%</span>`}
+      </div>
+      <div class="fp-infer-card-actions">${actions}</div>
+    </div>`;
+  };
+  toReview.forEach(t => { html += renderCard(t); });
+  accepted.forEach(t => { html += renderCard(t); });
+  skipped.forEach(t => { html += renderCard(t); });
+  return html;
 }
 
 // ── Init ─────────────────────────────────────────────────
