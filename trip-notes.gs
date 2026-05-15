@@ -39,8 +39,9 @@ function doPost(e) {
     if (b.action === 'createNote')  return ok(createNote(b));
     if (b.action === 'updateNote')  return ok(updateNote(b));
     if (b.action === 'deleteNote')  return ok(deleteNote(b));
-    if (b.action === 'uploadImage') return ok(uploadImage(b));
-    if (b.action === 'deleteImage') return ok(deleteImage(b));
+    if (b.action === 'uploadImage')       return ok(uploadImage(b));
+    if (b.action === 'deleteImage')       return ok(deleteImage(b));
+    if (b.action === 'inferDestination')  return ok(inferDestination_(b));
     return fail('UNKNOWN_ACTION', '不支援的操作');
   } catch (ex) { return fail(ex.code || 'SERVER_ERROR', ex.message); }
 }
@@ -276,6 +277,27 @@ function getImageRootFolder() {
 function getOrCreateFolder(parent, name) {
   const iter = parent.getFoldersByName(name);
   return iter.hasNext() ? iter.next() : parent.createFolder(name);
+}
+
+// ── inferDestination ─────────────────────────────────────────────────────
+function inferDestination_(p) {
+  const key = PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY');
+  if (!key) throw AppError('NO_API_KEY', 'GAS 尚未設定 OPENAI_API_KEY');
+  const prompt = '你是旅遊資料推論助理。根據旅程名稱判斷目的地國家和主要城市。\n旅程名稱：' + p.title + '\n日期：' + p.startDate + ' ～ ' + p.endDate + '\n只回傳 JSON：{"countries":[{"code":"JP","name_zh":"日本"}],"cities":[{"name_zh":"東京","country_code":"JP"}],"confidence":0.95}\n規則：台灣旅程 code 用 "TW"；無法判斷時 confidence<0.3，countries/cities 留空陣列。';
+  const resp = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'post', contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + key },
+    payload: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.1, max_tokens: 300
+    }),
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200)
+    throw AppError('OPENAI_ERROR', 'OpenAI 回應錯誤 ' + resp.getResponseCode());
+  return JSON.parse(JSON.parse(resp.getContentText()).choices[0].message.content);
 }
 
 // ── One-time setup ────────────────────────────────────────────────────────
