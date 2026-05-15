@@ -2177,6 +2177,7 @@ const ISO2_BY_NUM = {
 };
 
 const FP_COLOR_SCALE = ['#c8cfd6','#bfdbfe','#7ec8f0','#3b82f6','#1d4ed8','#134074'];
+const FP_GAS_URL = 'https://script.google.com/macros/s/AKfycbwTW5LOF3uVWW74X6MtMvgmPdpz8xQGi7krG5zyelPsjX-I2fDdN3un3DbQgLw6LV-q/exec';
 
 function fpCountColor(n) {
   if (!n) return FP_COLOR_SCALE[0];
@@ -2243,7 +2244,9 @@ async function fpRenderMap(containerId) {
 
     const W = 500, H = 500;
     let rot = [-118, -22, 0]; // 預設 focus 亞太
-    const proj = geoOrthographic().scale(230).translate([W / 2, H / 2]).rotate(rot).clipAngle(90);
+    let sc = 230;
+    const MIN_SC = 130, MAX_SC = 700;
+    const proj = geoOrthographic().scale(sc).translate([W / 2, H / 2]).rotate(rot).clipAngle(90);
     const pathGen = geoPath(proj);
     const geoCountries = topoFeature(atlas, atlas.objects.countries);
     const graticuleData = geoGraticule()();
@@ -2260,26 +2263,32 @@ async function fpRenderMap(containerId) {
     }).join('');
 
     const legendItems = FP_COLOR_SCALE.map((col, i) =>
-      `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#64748b">
-        <span style="width:11px;height:11px;border-radius:2px;background:${col};display:inline-block;border:1px solid #d1d5db"></span>
+      `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#94a3b8">
+        <span style="width:11px;height:11px;border-radius:2px;background:${col};display:inline-block;border:1px solid #334155"></span>
         ${['未造訪','1次','2次','3次','4-5次','6+'][i]}</span>`
     ).join('');
 
     el2.innerHTML = `
-      <div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px 0 0">拖曳旋轉地球</div>
-      <svg id="fp-svgmap" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;touch-action:none;cursor:grab">
-        <path id="fp-sphere" fill="#6ba3c2" d="${pathGen({type:'Sphere'})}"/>
-        <path id="fp-grat" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" d="${pathGen(graticuleData)}"/>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px 2px;background:#0f172a">
+        <span style="font-size:11px;color:#64748b">拖曳旋轉 · 滑動縮放</span>
+        <span style="display:flex;gap:4px">
+          <button id="fp-zoom-in"  style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:4px;width:26px;height:26px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">+</button>
+          <button id="fp-zoom-out" style="background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:4px;width:26px;height:26px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">−</button>
+        </span>
+      </div>
+      <svg id="fp-svgmap" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;touch-action:none;cursor:grab;background:#0f172a">
+        <path id="fp-sphere" fill="#111827" d="${pathGen({type:'Sphere'})}"/>
+        <path id="fp-grat" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" d="${pathGen(graticuleData)}"/>
         ${buildPaths()}
       </svg>
-      <div style="display:flex;gap:8px;padding:6px 8px;background:#f8fafc;flex-wrap:wrap;justify-content:center">${legendItems}</div>`;
+      <div style="display:flex;gap:8px;padding:6px 8px;background:#0f172a;flex-wrap:wrap;justify-content:center">${legendItems}</div>`;
 
     const svg = el2.querySelector('#fp-svgmap');
     const tip = fpGetOrCreateTip();
     let dragging = false, moved = false, lastXY = null, rafId = null;
 
     function redraw() {
-      proj.rotate(rot);
+      proj.rotate(rot).scale(sc);
       svg.querySelector('#fp-sphere').setAttribute('d', pathGen({type:'Sphere'}));
       svg.querySelector('#fp-grat').setAttribute('d', pathGen(graticuleData) || '');
       svg.querySelectorAll('path[data-fp-idx]').forEach(el => {
@@ -2287,6 +2296,12 @@ async function fpRenderMap(containerId) {
         if (feat) el.setAttribute('d', pathGen(feat) || '');
       });
     }
+    function applyZoom(factor) {
+      sc = Math.max(MIN_SC, Math.min(MAX_SC, sc * factor));
+      if (!rafId) rafId = requestAnimationFrame(() => { redraw(); rafId = null; });
+    }
+    el2.querySelector('#fp-zoom-in').addEventListener('click', () => applyZoom(1.25));
+    el2.querySelector('#fp-zoom-out').addEventListener('click', () => applyZoom(0.8));
 
     svg.addEventListener('pointerdown', e => {
       dragging = true; moved = false;
@@ -2329,6 +2344,30 @@ async function fpRenderMap(containerId) {
     svg.addEventListener('pointercancel', () => { dragging = false; svg.style.cursor = 'grab'; });
     svg.addEventListener('pointerleave', () => { if (!dragging) tip.style.display = 'none'; });
 
+    // 滾輪縮放
+    svg.addEventListener('wheel', e => {
+      e.preventDefault();
+      applyZoom(e.deltaY < 0 ? 1.12 : 0.89);
+    }, { passive: false });
+
+    // 捏合縮放（touch）
+    let pinchDist = null;
+    svg.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        e.preventDefault();
+      }
+    }, { passive: false });
+    svg.addEventListener('touchmove', e => {
+      if (e.touches.length === 2 && pinchDist) {
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        applyZoom(d / pinchDist);
+        pinchDist = d;
+        e.preventDefault();
+      }
+    }, { passive: false });
+    svg.addEventListener('touchend', () => { pinchDist = null; });
+
   } catch(e) {
     const el3 = document.getElementById(containerId);
     if (el3) el3.innerHTML = `<div style="text-align:center;padding:20px;color:#dc2626;font-size:13px">地圖載入失敗：${esc(e.message)}</div>`;
@@ -2370,13 +2409,13 @@ function fpSaveLLMCache(c) { localStorage.setItem('footprint_llm_cache', JSON.st
 async function fpInferTrip(trip) {
   const cache = fpGetLLMCache();
   if (cache[trip.name] && !cache[trip.name].error) return cache[trip.name];
-  const result = await gasCall('POST', {
-    action: 'inferDestination',
-    title: trip.title,
-    startDate: trip.startDate,
-    endDate: trip.endDate
+  const res = await fetch(FP_GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'inferDestination', title: trip.title, startDate: trip.startDate, endDate: trip.endDate })
   });
-  cache[trip.name] = { ...result, tripMeta: trip, inferredAt: new Date().toISOString() };
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error?.message || '伺服器錯誤');
+  cache[trip.name] = { ...data.data, tripMeta: trip, inferredAt: new Date().toISOString() };
   fpSaveLLMCache(cache);
   return cache[trip.name];
 }
