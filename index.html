@@ -203,6 +203,64 @@
     .drawer-item-done:hover { color: #64748b; }
     .done-tag { font-size: 11px; color: #cbd5e1; margin-left: 3px; }
 
+    /* ── World Map / Footprint ── */
+    .drawer-map-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px;
+      font-size: 15px; font-weight: 600; color: #134074;
+      cursor: pointer; border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+    .drawer-map-btn:hover { background: #eff6ff; }
+
+    .fp-page { padding: 16px; }
+    .fp-hero { text-align: center; padding: 16px 0 20px; }
+    .fp-hero-title { font-size: 20px; font-weight: 800; color: #134074; margin-bottom: 4px; }
+    .fp-hero-sub { font-size: 13px; color: #94a3b8; }
+
+    .fp-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .fp-stat-card {
+      background: #f8fafc; border-radius: 12px; padding: 14px 16px;
+      border: 1px solid #e2e8f0;
+    }
+    .fp-stat-num { font-size: 28px; font-weight: 800; color: #134074; line-height: 1; }
+    .fp-stat-unit { font-size: 13px; color: #64748b; margin-top: 2px; }
+    .fp-stat-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+    .fp-progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .fp-progress-fill { height: 100%; background: #134074; border-radius: 3px; transition: width 0.6s ease; }
+
+    .fp-section-label {
+      font-size: 11px; font-weight: 700; color: #94a3b8;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      margin: 16px 0 8px;
+    }
+    .fp-country-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; background: #fff;
+      border: 1px solid #e2e8f0; border-radius: 10px;
+      margin-bottom: 6px; cursor: pointer;
+    }
+    .fp-country-item:active { background: #f1f5f9; }
+    .fp-country-flag { font-size: 22px; flex-shrink: 0; }
+    .fp-country-name { font-size: 15px; font-weight: 600; color: #1e293b; flex: 1; }
+    .fp-country-meta { font-size: 12px; color: #94a3b8; text-align: right; }
+    .fp-country-visits { font-size: 13px; font-weight: 700; color: #134074; }
+
+    .fp-unmapped {
+      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 12px; font-size: 13px; color: #92400e;
+    }
+    .fp-import-btn {
+      width: 100%; padding: 13px; background: #134074; color: #fff;
+      border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-top: 8px;
+    }
+    .fp-import-btn:active { opacity: .85; }
+    .fp-import-btn.secondary {
+      background: #f1f5f9; color: #334155; margin-top: 6px;
+    }
+
     /* ── Pages ── */
     .page { padding: 16px; }
 
@@ -748,7 +806,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v1.8</span>
+      <span class="drawer-version">v2.0</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -1721,7 +1779,7 @@ function renderDrawer() {
   const thisYear = new Date().getFullYear();
   const years = Object.keys(byYear).map(Number).sort((a,b) => a-b);
 
-  let html = '';
+  let html = `<div class="drawer-map-btn" onclick="closeDrawer();openWorldMap()">🗺️ 我的世界足跡</div>`;
   years.forEach(yr => {
     const collapsed = yr !== thisYear;
     html += `
@@ -1803,6 +1861,241 @@ function todayCardHTML() {
     <div class="today-card-day">第 ${dayNum} 天 · ${dayEntry.dateLabel}</div>
     ${actsHtml}
   </div>`;
+}
+
+// ── World Map / Footprint ────────────────────────────────
+
+const SHEET_B_ID = '11LP8I-ENl_CbnzvifC45p0ojQe1uYexB3reyKTiGK6A';
+const SHEET_B_URL = `https://docs.google.com/spreadsheets/d/${SHEET_B_ID}/export?format=csv&gid=0`;
+
+let FP_COUNTRIES = null;
+
+async function loadFPCountries() {
+  if (FP_COUNTRIES) return FP_COUNTRIES;
+  try {
+    const r = await fetch('./countries.json');
+    FP_COUNTRIES = await r.json();
+  } catch(e) { FP_COUNTRIES = []; }
+  return FP_COUNTRIES;
+}
+
+function fpCountryCode(nameZh) {
+  if (!FP_COUNTRIES) return null;
+  const n = (nameZh || '').trim();
+  const c = FP_COUNTRIES.find(c => c.name_zh === n || c.name_en === n);
+  return c?.code || null;
+}
+
+function fpCountryEmoji(code) {
+  if (!code) return '🏳️';
+  return code.toUpperCase().split('').map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
+}
+
+function parseSheetBCSV(text) {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const cols = []; let cur = ''; let inQ = false;
+    for (const ch of line) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function normalizeDate(s) {
+  if (!s) return '';
+  return s.trim().replace(/\//g, '-');
+}
+
+async function importSheetB(force = false) {
+  if (!force && localStorage.getItem('fp_imported_b')) {
+    return { skipped: true };
+  }
+  await loadFPCountries();
+  const r = await fetch(SHEET_B_URL);
+  if (!r.ok) throw new Error(`Sheet B 讀取失敗 ${r.status}`);
+  const csv = await r.text();
+  const rows = parseSheetBCSV(csv);
+
+  const header = rows[0] || [];
+  const iNo = header.findIndex(h => h.includes('No') || h === '');
+  const iStart = header.findIndex(h => h.includes('出發'));
+  const iEnd   = header.findIndex(h => h.includes('回國') || h.includes('結束'));
+  const iDays  = header.findIndex(h => h.includes('天數'));
+  const iCtry  = header.findIndex(h => h.includes('國家'));
+  const iCity  = header.findIndex(h => h.includes('城市'));
+  const iNote  = header.findIndex(h => h.includes('註記') || h.includes('備註'));
+
+  const trips = []; const visits = []; const unmapped = [];
+
+  for (const row of rows.slice(1)) {
+    const startRaw = row[iStart] || ''; const endRaw = row[iEnd] || '';
+    if (!startRaw || !endRaw) continue;
+    const startDate = normalizeDate(startRaw);
+    const endDate   = normalizeDate(endRaw);
+    const tripKey   = `${startDate.replace(/-/g,'')}_ ${endDate.replace(/-/g,'')}`;
+    const countryRaw = (row[iCtry] || '').trim();
+    const citiesRaw  = (row[iCity] || '').trim();
+    const note       = row[iNote]  ? row[iNote].trim() : '';
+    const days       = parseInt(row[iDays]) || 0;
+    const code       = fpCountryCode(countryRaw);
+    if (countryRaw && !code) unmapped.push(countryRaw);
+
+    const cityNames = citiesRaw
+      ? citiesRaw.split(/[、,，\/／]+/).map(s => s.trim()).filter(Boolean)
+      : [];
+
+    trips.push({ tripKey, source: 'sheet_b', startDate, endDate, duration: days,
+                 countryCode: code, countryRaw, note });
+    cityNames.forEach(city => {
+      visits.push({ tripKey, source: 'sheet_b', countryCode: code, countryRaw,
+                    cityNameRaw: city, startDate, endDate });
+    });
+  }
+
+  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]');
+  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]');
+  const existingKeys   = new Set(existingTrips.map(t => t.tripKey));
+  const newTrips       = trips.filter(t => !existingKeys.has(t.tripKey));
+  const newVisits      = visits.filter(v => !existingKeys.has(v.tripKey));
+
+  localStorage.setItem('fp_trips',  JSON.stringify([...existingTrips,  ...newTrips]));
+  localStorage.setItem('fp_visits', JSON.stringify([...existingVisits, ...newVisits]));
+  localStorage.setItem('fp_imported_b', '1');
+
+  return { added: newTrips.length, unmapped: [...new Set(unmapped)] };
+}
+
+function fpBuildStats() {
+  const trips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]');
+  const visits = JSON.parse(localStorage.getItem('fp_visits') || '[]');
+
+  const countryCodes  = new Set(trips.map(t => t.countryCode).filter(Boolean));
+  const citySet       = new Set(visits.map(v => `${v.cityNameRaw}_${v.countryCode}`));
+  const totalDays     = trips.reduce((s, t) => s + (t.duration || 0), 0);
+
+  const countryVisits = {};
+  trips.forEach(t => {
+    if (!t.countryCode) return;
+    if (!countryVisits[t.countryCode]) {
+      countryVisits[t.countryCode] = { code: t.countryCode, raw: t.countryRaw, count: 0, lastDate: '' };
+    }
+    countryVisits[t.countryCode].count++;
+    if (t.startDate > countryVisits[t.countryCode].lastDate)
+      countryVisits[t.countryCode].lastDate = t.startDate;
+  });
+
+  const countryList = Object.values(countryVisits)
+    .sort((a, b) => b.count - a.count || b.lastDate.localeCompare(a.lastDate));
+
+  return { trips: trips.length, countries: countryCodes.size, cities: citySet.size,
+           totalDays, countryList };
+}
+
+async function openWorldMap() {
+  document.getElementById('menuBtn').style.display = 'none';
+  document.getElementById('backBtn').style.display = '';
+  document.getElementById('headerTitle').innerHTML =
+    '<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 我的世界足跡';
+  document.getElementById('calBtn').style.display = 'none';
+  document.getElementById('moreBtnWrap').style.display = 'none';
+  document.getElementById('notesBtn').style.display = 'none';
+
+  setContent('<div class="center-msg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="120" height="120" style="display:block;margin:0 auto"><circle stroke-width="2" stroke="#134074" fill="none" r="0" cy="50" cx="50"><animate begin="0s" calcMode="spline" keySplines="0 0.2 0.8 1" keyTimes="0;1" values="0;40" dur="1s" repeatCount="indefinite" attributeName="r"/><animate begin="0s" calcMode="spline" keySplines="0.2 0 0.8 1" keyTimes="0;1" values="1;0" dur="1s" repeatCount="indefinite" attributeName="opacity"/></circle><circle stroke-width="2" stroke="#bdc2e8" fill="none" r="0" cy="50" cx="50"><animate begin="-0.5s" calcMode="spline" keySplines="0 0.2 0.8 1" keyTimes="0;1" values="0;40" dur="1s" repeatCount="indefinite" attributeName="r"/><animate begin="-0.5s" calcMode="spline" keySplines="0.2 0 0.8 1" keyTimes="0;1" values="1;0" dur="1s" repeatCount="indefinite" attributeName="opacity"/></circle></svg></div>');
+
+  try {
+    await loadFPCountries();
+    const hasData = localStorage.getItem('fp_imported_b');
+    if (!hasData) {
+      const result = await importSheetB();
+      renderFootprintDash(result?.unmapped || []);
+    } else {
+      renderFootprintDash([]);
+    }
+  } catch(e) {
+    setContent(`<div class="center-msg"><div class="err-icon">⚠️</div><div class="err-msg">${esc(e.message)}</div></div>`);
+  }
+}
+
+function renderFootprintDash(unmapped) {
+  const stats = fpBuildStats();
+  const totalCountries = 195;
+  const pct = stats.countries ? ((stats.countries / totalCountries) * 100).toFixed(1) : 0;
+
+  let unmappedHtml = '';
+  if (unmapped.length) {
+    unmappedHtml = `<div class="fp-unmapped">
+      ⚠️ 以下國家名稱未能對應到代碼，請手動確認：<br>
+      <strong>${unmapped.join('、')}</strong>
+    </div>`;
+  }
+
+  let countriesHtml = '';
+  if (stats.countryList.length === 0) {
+    countriesHtml = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無造訪紀錄</div>';
+  } else {
+    stats.countryList.forEach(c => {
+      const flag = fpCountryEmoji(c.code);
+      const last = c.lastDate ? c.lastDate.slice(0, 7).replace('-', '/') : '';
+      countriesHtml += `<div class="fp-country-item">
+        <span class="fp-country-flag">${flag}</span>
+        <span class="fp-country-name">${esc(c.raw || c.code)}</span>
+        <div class="fp-country-meta">
+          <div class="fp-country-visits">${c.count} 次</div>
+          ${last ? `<div>${last}</div>` : ''}
+        </div>
+      </div>`;
+    });
+  }
+
+  const html = `<div class="fp-page">
+    <div class="fp-hero">
+      <div class="fp-hero-title">🌏 我的世界足跡</div>
+      <div class="fp-hero-sub">根據「過去出國紀錄」統計</div>
+    </div>
+
+    <div class="fp-stats-grid">
+      <div class="fp-stat-card">
+        <div class="fp-stat-num">${stats.countries}</div>
+        <div class="fp-stat-unit">個國家</div>
+        <div class="fp-stat-sub">${pct}% 世界</div>
+        <div class="fp-progress-bar">
+          <div class="fp-progress-fill" style="width:${Math.min(pct, 100)}%"></div>
+        </div>
+      </div>
+      <div class="fp-stat-card">
+        <div class="fp-stat-num">${stats.cities}</div>
+        <div class="fp-stat-unit">個城市</div>
+      </div>
+      <div class="fp-stat-card">
+        <div class="fp-stat-num">${stats.trips}</div>
+        <div class="fp-stat-unit">趟旅程</div>
+      </div>
+      <div class="fp-stat-card">
+        <div class="fp-stat-num">${stats.totalDays}</div>
+        <div class="fp-stat-unit">天出國</div>
+      </div>
+    </div>
+
+    ${unmappedHtml}
+
+    <div class="fp-section-label">造訪國家（依次數）</div>
+    ${countriesHtml}
+
+    <button class="fp-import-btn secondary" onclick="fpReimport()">↻ 重新匯入 Sheet B</button>
+  </div>`;
+
+  setContent(html);
+}
+
+async function fpReimport() {
+  localStorage.removeItem('fp_imported_b');
+  localStorage.removeItem('fp_trips');
+  localStorage.removeItem('fp_visits');
+  await openWorldMap();
 }
 
 // ── Init ─────────────────────────────────────────────────

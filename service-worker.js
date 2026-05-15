@@ -1,4 +1,4 @@
-const CACHE = 'travel-v11';
+const CACHE = 'travel-v12';
 const SHARE_CACHE = 'pwa-share-v1';
 const SHELL = [
   './index.html',
@@ -6,6 +6,8 @@ const SHELL = [
   './scene_01.jpg',
   './scene_02.jpg',
   './scene_03.jpg',
+  './countries.json',
+  './flight.svg',
 ];
 
 self.addEventListener('install', e => {
