@@ -2000,17 +2000,15 @@ async function importSheetB(force = false) {
     }
   }
 
-  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]');
-  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]');
-  const existingKeys   = new Set(existingTrips.map(t => t.tripKey));
-  const newTrips       = trips.filter(t => !existingKeys.has(t.tripKey));
-  const newVisits      = visits.filter(v => !existingKeys.has(v.tripKey));
+  // 覆蓋式匯入：先移除舊的 sheet_b 資料，再合併新資料（避免重複累加）
+  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]').filter(t => t.source !== 'sheet_b');
+  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]').filter(v => v.source !== 'sheet_b');
 
-  localStorage.setItem('fp_trips',  JSON.stringify([...existingTrips,  ...newTrips]));
-  localStorage.setItem('fp_visits', JSON.stringify([...existingVisits, ...newVisits]));
+  localStorage.setItem('fp_trips',  JSON.stringify([...existingTrips,  ...trips]));
+  localStorage.setItem('fp_visits', JSON.stringify([...existingVisits, ...visits]));
   localStorage.setItem('fp_imported_b', '1');
 
-  return { added: newTrips.length, unmapped: [...new Set(unmapped)] };
+  return { added: trips.length, unmapped: [...new Set(unmapped)] };
 }
 
 function fpBuildStats() {
@@ -2019,7 +2017,14 @@ function fpBuildStats() {
 
   const countryCodes  = new Set(trips.map(t => t.countryCode).filter(Boolean));
   const citySet       = new Set(visits.map(v => `${v.cityNameRaw}_${v.countryCode}`));
-  const totalDays     = trips.reduce((s, t) => s + (t.duration || 0), 0);
+  // 多國旅程各產生一筆 trip，用原始 tripKey（YYYYMMDD_YYYYMMDD 前兩段）去重避免重複計天
+  const seenBase = new Set();
+  const totalDays = trips.reduce((s, t) => {
+    const base = t.tripKey.split('_').slice(0, 2).join('_');
+    if (seenBase.has(base)) return s;
+    seenBase.add(base);
+    return s + (t.duration || 0);
+  }, 0);
 
   const countryVisits = {};
   trips.forEach(t => {
