@@ -2176,7 +2176,7 @@ const ISO2_BY_NUM = {
   858:'UY',860:'UZ',862:'VE',882:'WS',887:'YE',894:'ZM',336:'VA',275:'PS'
 };
 
-const FP_COLOR_SCALE = ['#e5e7eb','#dbeafe','#93c5fd','#3b82f6','#1d4ed8','#134074'];
+const FP_COLOR_SCALE = ['#c8cfd6','#bfdbfe','#7ec8f0','#3b82f6','#1d4ed8','#134074'];
 
 function fpCountColor(n) {
   if (!n) return FP_COLOR_SCALE[0];
@@ -2253,7 +2253,7 @@ async function fpRenderMap(containerId) {
       if (!d) return;
       const nameZh = code ? (FP_COUNTRIES?.find(c => c.code === code)?.name_zh || code) : '';
       const safeCode = code ? ` data-code="${code}" data-name="${nameZh.replace(/"/g, '')}" data-n="${n}"` : '';
-      pathsHtml += `<path d="${d}" fill="${fpCountColor(n)}" stroke="#fff" stroke-width="0.5"${safeCode}/>`;
+      pathsHtml += `<path d="${d}" fill="${fpCountColor(n)}" stroke="#fff" stroke-width="0.3"${safeCode}/>`;
     });
 
     const legendItems = FP_COLOR_SCALE.map((col, i) =>
@@ -2263,7 +2263,7 @@ async function fpRenderMap(containerId) {
     ).join('');
 
     el2.innerHTML = `
-      <svg id="fp-svgmap" viewBox="0 0 ${W} ${H}" style="width:100%;max-height:240px;display:block;background:#f0f9ff;border-radius:8px 8px 0 0">${pathsHtml}</svg>
+      <svg id="fp-svgmap" viewBox="0 0 ${W} ${H}" style="width:100%;max-height:240px;display:block;background:#a8c4d8;border-radius:8px 8px 0 0">${pathsHtml}</svg>
       <div style="display:flex;gap:8px;padding:6px 8px;background:#f8fafc;border-radius:0 0 8px 8px;flex-wrap:wrap;justify-content:center">${legendItems}</div>`;
 
     const svg = el2.querySelector('#fp-svgmap');
