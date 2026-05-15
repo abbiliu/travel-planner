@@ -2237,55 +2237,98 @@ async function fpRenderMap(containerId) {
     const atlas = await fpFetchAtlas();
     const el2 = document.getElementById(containerId);
     if (!el2) return;
-    const { geoNaturalEarth1, geoPath } = window._fpD3;
+
+    const { geoOrthographic, geoPath, geoGraticule } = window._fpD3;
     const { feature: topoFeature } = window._fpTopo;
-    const W = 960, H = 500;
-    const proj = geoNaturalEarth1().scale(153).translate([W / 2, H / 2]);
+
+    const W = 500, H = 500;
+    let rot = [-118, -22, 0]; // 預設 focus 亞太
+    const proj = geoOrthographic().scale(230).translate([W / 2, H / 2]).rotate(rot).clipAngle(90);
     const pathGen = geoPath(proj);
     const geoCountries = topoFeature(atlas, atlas.objects.countries);
+    const graticuleData = geoGraticule()();
     const counts = fpGetCountryCounts();
 
-    let pathsHtml = '';
-    geoCountries.features.forEach(feat => {
+    const buildPaths = () => geoCountries.features.map((feat, i) => {
       const code = ISO2_BY_NUM[+feat.id] || null;
       const n = code ? (counts[code] || 0) : 0;
       const d = pathGen(feat);
-      if (!d) return;
+      if (!d) return '';
       const nameZh = code ? (FP_COUNTRIES?.find(c => c.code === code)?.name_zh || code) : '';
-      const safeCode = code ? ` data-code="${code}" data-name="${nameZh.replace(/"/g, '')}" data-n="${n}"` : '';
-      pathsHtml += `<path d="${d}" fill="${fpCountColor(n)}" stroke="#fff" stroke-width="0.3"${safeCode}/>`;
-    });
+      const attrs = code ? ` data-code="${code}" data-name="${nameZh.replace(/"/g,'')}" data-n="${n}"` : '';
+      return `<path data-fp-idx="${i}" fill="${fpCountColor(n)}" stroke="#fff" stroke-width="0.3"${attrs} d="${d}"/>`;
+    }).join('');
 
     const legendItems = FP_COLOR_SCALE.map((col, i) =>
       `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#64748b">
         <span style="width:11px;height:11px;border-radius:2px;background:${col};display:inline-block;border:1px solid #d1d5db"></span>
-        ${ ['未造訪','1次','2次','3次','4-5次','6+'][i] }</span>`
+        ${['未造訪','1次','2次','3次','4-5次','6+'][i]}</span>`
     ).join('');
 
     el2.innerHTML = `
-      <svg id="fp-svgmap" viewBox="0 0 ${W} ${H}" style="width:100%;max-height:240px;display:block;background:#a8c4d8;border-radius:8px 8px 0 0">${pathsHtml}</svg>
-      <div style="display:flex;gap:8px;padding:6px 8px;background:#f8fafc;border-radius:0 0 8px 8px;flex-wrap:wrap;justify-content:center">${legendItems}</div>`;
+      <div style="text-align:center;font-size:11px;color:#94a3b8;padding:4px 0 0">拖曳旋轉地球</div>
+      <svg id="fp-svgmap" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;touch-action:none;cursor:grab">
+        <path id="fp-sphere" fill="#6ba3c2" d="${pathGen({type:'Sphere'})}"/>
+        <path id="fp-grat" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" d="${pathGen(graticuleData)}"/>
+        ${buildPaths()}
+      </svg>
+      <div style="display:flex;gap:8px;padding:6px 8px;background:#f8fafc;flex-wrap:wrap;justify-content:center">${legendItems}</div>`;
 
     const svg = el2.querySelector('#fp-svgmap');
     const tip = fpGetOrCreateTip();
+    let dragging = false, moved = false, lastXY = null, rafId = null;
+
+    function redraw() {
+      proj.rotate(rot);
+      svg.querySelector('#fp-sphere').setAttribute('d', pathGen({type:'Sphere'}));
+      svg.querySelector('#fp-grat').setAttribute('d', pathGen(graticuleData) || '');
+      svg.querySelectorAll('path[data-fp-idx]').forEach(el => {
+        const feat = geoCountries.features[+el.dataset.fpIdx];
+        if (feat) el.setAttribute('d', pathGen(feat) || '');
+      });
+    }
+
+    svg.addEventListener('pointerdown', e => {
+      dragging = true; moved = false;
+      lastXY = [e.clientX, e.clientY];
+      svg.setPointerCapture(e.pointerId);
+      svg.style.cursor = 'grabbing';
+      tip.style.display = 'none';
+    });
     svg.addEventListener('pointermove', e => {
-      const p = e.target.closest('path[data-code]');
-      if (!p) { tip.style.display = 'none'; return; }
-      tip.textContent = +p.dataset.n > 0 ? `${p.dataset.name}（${p.dataset.n}次）` : p.dataset.name;
-      tip.style.display = 'block';
-      tip.style.left = (e.clientX + 14) + 'px';
-      tip.style.top  = (e.clientY - 10) + 'px';
+      if (!dragging) {
+        const p = e.target.closest('path[data-code]');
+        if (!p) { tip.style.display = 'none'; return; }
+        tip.textContent = +p.dataset.n > 0 ? `${p.dataset.name}（${p.dataset.n}次）` : p.dataset.name;
+        tip.style.display = 'block';
+        tip.style.left = (e.clientX + 14) + 'px';
+        tip.style.top  = (e.clientY - 10) + 'px';
+        return;
+      }
+      const dx = e.clientX - lastXY[0], dy = e.clientY - lastXY[1];
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+      rot[0] += dx * 0.4;
+      rot[1] = Math.max(-80, Math.min(80, rot[1] - dy * 0.4));
+      lastXY = [e.clientX, e.clientY];
+      if (!rafId) rafId = requestAnimationFrame(() => { redraw(); rafId = null; });
     });
-    svg.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
-    svg.addEventListener('click', e => {
-      const p = e.target.closest('path[data-code]');
-      if (!p || !+p.dataset.n) return;
-      tip.textContent = `${p.dataset.name}（${p.dataset.n}次）`;
-      tip.style.display = 'block';
-      tip.style.left = (e.clientX + 14) + 'px';
-      tip.style.top  = (e.clientY - 10) + 'px';
-      setTimeout(() => { tip.style.display = 'none'; }, 2500);
+    svg.addEventListener('pointerup', e => {
+      if (dragging && !moved) {
+        const p = document.elementFromPoint(e.clientX, e.clientY)?.closest('path[data-code]');
+        if (p && +p.dataset.n > 0) {
+          tip.textContent = `${p.dataset.name}（${p.dataset.n}次）`;
+          tip.style.display = 'block';
+          tip.style.left = (e.clientX + 14) + 'px';
+          tip.style.top  = (e.clientY - 10) + 'px';
+          setTimeout(() => { tip.style.display = 'none'; }, 2500);
+        }
+      }
+      dragging = false; lastXY = null;
+      svg.style.cursor = 'grab';
     });
+    svg.addEventListener('pointercancel', () => { dragging = false; svg.style.cursor = 'grab'; });
+    svg.addEventListener('pointerleave', () => { if (!dragging) tip.style.display = 'none'; });
+
   } catch(e) {
     const el3 = document.getElementById(containerId);
     if (el3) el3.innerHTML = `<div style="text-align:center;padding:20px;color:#dc2626;font-size:13px">地圖載入失敗：${esc(e.message)}</div>`;
