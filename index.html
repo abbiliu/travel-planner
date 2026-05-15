@@ -2412,6 +2412,14 @@ function fpClearInferErrors() {
   renderFootprintDash([]);
 }
 
+function fpSaveKeyAndRetry() {
+  const input = document.getElementById('fp-key-input');
+  if (!input || !input.value.trim()) return;
+  localStorage.setItem('openai_key', input.value.trim());
+  fpClearInferErrors();
+  setTimeout(() => fpRunInference(), 100);
+}
+
 async function fpInferTrip(trip) {
   const cache = fpGetLLMCache();
   if (cache[trip.name] && !cache[trip.name].error) return cache[trip.name];
@@ -2542,7 +2550,19 @@ function fpBuildInferSection() {
   const errored = pending.filter(t => cache[t.name]?.error);
   if (errored.length) {
     const msg = cache[errored[0].name]?.error || '未知錯誤';
-    html += `<div style="color:#dc2626;font-size:12px;margin:4px 0 6px;padding:6px 10px;background:#fef2f2;border-radius:6px;word-break:break-all">⚠️ 上次推論失敗：${esc(msg)}<br><button onclick="fpClearInferErrors()" style="margin-top:4px;font-size:11px;padding:2px 8px;border:1px solid #dc2626;background:none;color:#dc2626;border-radius:4px;cursor:pointer">清除錯誤重試</button></div>`;
+    const isNoKey = msg === '未設定 OpenAI Key' || msg === 'nokey';
+    if (isNoKey) {
+      html += `<div style="font-size:13px;margin:4px 0 8px;padding:10px 12px;background:#fef9c3;border-radius:8px;border:1px solid #fbbf24">
+        🔑 請輸入 OpenAI API Key（PWA 需單獨設定）<br>
+        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+          <input id="fp-key-input" type="password" placeholder="sk-..." value="${esc(localStorage.getItem('openai_key')||'')}"
+            style="flex:1;font-size:12px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;min-width:0">
+          <button onclick="fpSaveKeyAndRetry()" style="font-size:12px;padding:6px 12px;background:#134074;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap">儲存並推論</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div style="color:#dc2626;font-size:12px;margin:4px 0 6px;padding:6px 10px;background:#fef2f2;border-radius:6px;word-break:break-all">⚠️ 上次推論失敗：${esc(msg)}<br><button onclick="fpClearInferErrors()" style="margin-top:4px;font-size:11px;padding:2px 8px;border:1px solid #dc2626;background:none;color:#dc2626;border-radius:4px;cursor:pointer">清除錯誤重試</button></div>`;
+    }
   }
   if (pending.length) {
     html += `<div style="margin:10px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
