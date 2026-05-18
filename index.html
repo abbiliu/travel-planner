@@ -2893,6 +2893,13 @@ let pendingImages = [];
 let editingNoteId = null;
 const noteImagesCache = {};  // noteId_imageId → { imageUrl, thumbnailUrl }
 
+function driveImgUrl(url, width) {
+  if (!url) return '';
+  const m = url.match(/[?&]id=([A-Za-z0-9_-]+)/);
+  if (!m) return url;
+  return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w${width}`;
+}
+
 function populateImagesCache(notes) {
   for (const note of notes) {
     for (const img of (note.images || [])) {
@@ -3141,7 +3148,7 @@ function renderNoteCard(note, identity) {
     imgGrid = '<div class="note-image-grid">';
     show.forEach((imgId, i) => {
       const key = note.noteId + '_' + imgId;
-      const thumbUrl = (noteImagesCache[key]||{}).thumbnailUrl || '';
+      const thumbUrl = driveImgUrl((noteImagesCache[key]||{}).thumbnailUrl, 400);
       if (i === 5 && more > 0) {
         imgGrid += `<div class="note-image-more" onclick="showImgPreview('${esc(note.noteId)}',${i})">+${more+1}</div>`;
       } else {
@@ -3414,7 +3421,7 @@ function showImgPreview(noteId, startIdx) {
   el.className = 'img-preview-overlay';
   function render() {
     const imgId = note.imageRefs[idx];
-    const url = (noteImagesCache[noteId + '_' + imgId] || {}).imageUrl || '';
+    const url = driveImgUrl((noteImagesCache[noteId + '_' + imgId] || {}).imageUrl, 1920);
     el.innerHTML = `
       <button class="img-preview-close" onclick="this.closest('.img-preview-overlay').remove()">×</button>
       <img class="img-preview-img" src="${esc(url)}" alt="">
