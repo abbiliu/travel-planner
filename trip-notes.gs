@@ -25,8 +25,9 @@ const IMAGE_COLS = [
 function doGet(e) {
   const p = e.parameter;
   try {
-    if (p.action === 'getShareInfo') return ok(getShareInfo(p.token));
-    if (p.action === 'getNotes')     return ok(getNotes(p.tripId, p.token));
+    if (p.action === 'getShareInfo')     return ok(getShareInfo(p.token));
+    if (p.action === 'getNotes')         return ok(getNotes(p.tripId, p.token));
+    if (p.action === 'inferDestination') return ok(inferDestination_(p));
     return fail('UNKNOWN_ACTION', '不支援的操作');
   } catch (ex) { return fail(ex.code || 'SERVER_ERROR', ex.message); }
 }
@@ -129,6 +130,15 @@ function getNotes(tripId, token) {
   const notes = data
     .filter(r => r.tripId === tripId && !isTrue(r.deleted))
     .map(formatNote);
+
+  const { data: imgData } = sheetRows('trip_note_images');
+  const imgMap = {};
+  for (const img of imgData) {
+    if (!imgMap[img.noteId]) imgMap[img.noteId] = [];
+    imgMap[img.noteId].push({ imageId: img.imageId, imageUrl: img.imageUrl, thumbnailUrl: img.thumbnailUrl });
+  }
+  notes.forEach(n => { n.images = imgMap[n.noteId] || []; });
+
   return { notes };
 }
 

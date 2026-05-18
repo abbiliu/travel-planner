@@ -858,7 +858,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.5</span>
+      <span class="drawer-version">v2.6</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -2893,6 +2893,14 @@ let pendingImages = [];
 let editingNoteId = null;
 const noteImagesCache = {};  // noteId_imageId → { imageUrl, thumbnailUrl }
 
+function populateImagesCache(notes) {
+  for (const note of notes) {
+    for (const img of (note.images || [])) {
+      noteImagesCache[note.noteId + '_' + img.imageId] = { imageUrl: img.imageUrl, thumbnailUrl: img.thumbnailUrl };
+    }
+  }
+}
+
 // ── GAS URL ────────────────────────────────────────────────────────
 function getGasUrl() { return (localStorage.getItem('gas_url') || '').trim(); }
 function saveGasUrl(url) { localStorage.setItem('gas_url', url.trim()); }
@@ -3056,6 +3064,7 @@ async function openNotes() {
 
   try {
     const { notes } = await fetchNotes(t.name);
+    populateImagesCache(notes);
     currentNotes = notes;
     notesFilter = 'all';
     renderNotesPage(t);
@@ -3251,7 +3260,7 @@ function showNoteForm(t, editNoteId) {
         <div class="form-section-label">內容</div>
         <textarea id="formText" class="form-textarea" placeholder="輸入筆記內容...">${esc(formText)}</textarea>
         <div class="form-section-label">圖片</div>
-        <button class="form-add-photo" onclick="el.querySelector('#imgFileInput').click()">📷 加入圖片（最多 9 張）</button>
+        <label class="form-add-photo" for="imgFileInput">📷 加入圖片（最多 9 張）</label>
         <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none">
         <div class="form-photo-preview" id="formPhotoPrev"></div>
         ${formCat==='expense'?`
@@ -3443,6 +3452,7 @@ function _onVisibilityChange() {
 async function syncNotes(tripId) {
   try {
     const { notes } = await fetchNotes(tripId);
+    populateImagesCache(notes);
     const localTemp = currentNotes.filter(n => n._syncStatus === 'syncing' || n._syncStatus === 'failed');
     const localIds = new Set(localTemp.map(n => n.noteId));
     currentNotes = [...notes.filter(n => !localIds.has(n.noteId)), ...localTemp];
