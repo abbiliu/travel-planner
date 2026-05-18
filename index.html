@@ -858,7 +858,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.4</span>
+      <span class="drawer-version">v2.5</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -1821,6 +1821,23 @@ function weatherCodeEmoji(code) {
   return '🌡️';
 }
 
+function extractCoordsFromMapsUrl(url) {
+  if (!url) return null;
+  let m = url.match(/@(-?\d+\.?\d+),(-?\d+\.?\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  m = url.match(/[?&]q=(-?\d+\.?\d+),(-?\d+\.?\d+)/);
+  if (m) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  return null;
+}
+
+function getHotelCoords(t) {
+  for (const day of (t.days || [])) {
+    const coords = extractCoordsFromMapsUrl(day.hotelUrl);
+    if (coords) return coords;
+  }
+  return null;
+}
+
 async function geocodeQuery(q) {
   try {
     const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=zh`);
@@ -1878,7 +1895,8 @@ async function loadTripWeather(t) {
   if (!t.end || t.end < today) return;
   const daysUntilStart = t.start ? Math.round((t.start - today) / 86400000) : 0;
   if (daysUntilStart > 16) return;
-  const geo = await geocodeTrip(t.name || t.title);
+  const hotelCoords = getHotelCoords(t);
+  const geo = hotelCoords || await geocodeTrip(t.name || t.title);
   if (!geo) return;
   const days = await fetchTripWeather(t, geo.lat, geo.lon);
   if (!days?.length) return;
