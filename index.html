@@ -858,7 +858,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.3</span>
+      <span class="drawer-version">v2.4</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -1796,6 +1796,20 @@ function dayHTML(day, n) {
 }
 
 // ── Weather ───────────────────────────────────────────────
+const GEO_ALIASES = [
+  [/沖繩/, 'Okinawa'], [/東京|渋谷|新宿/, 'Tokyo'], [/富士/, 'Fuji'],
+  [/北海道|札幌/, 'Sapporo'], [/留壽都/, 'Rusutsu'], [/輕井澤|軽井澤/, 'Karuizawa'],
+  [/大阪/, 'Osaka'], [/京都/, 'Kyoto'], [/福岡/, 'Fukuoka'],
+  [/名古屋/, 'Nagoya'], [/奈良/, 'Nara'], [/廣島/, 'Hiroshima'], [/神戶/, 'Kobe'],
+  [/金門/, 'Kinmen'], [/富國/, 'Phu Quoc'], [/宿霧/, 'Cebu'],
+  [/長灘/, 'Boracay'], [/巴拉望/, 'Palawan'],
+  [/普吉/, 'Phuket'], [/曼谷/, 'Bangkok'], [/清邁/, 'Chiang Mai'], [/蘇梅/, 'Koh Samui'],
+  [/峇里|巴里島/, 'Bali'], [/夏威夷/, 'Honolulu'],
+  [/首爾/, 'Seoul'], [/釜山/, 'Busan'], [/濟州/, 'Jeju'],
+  [/新加坡/, 'Singapore'], [/巴黎/, 'Paris'], [/倫敦/, 'London'],
+  [/羅馬/, 'Rome'], [/米蘭/, 'Milan'],
+];
+
 function weatherCodeEmoji(code) {
   if (code === 0) return '☀️';
   if (code <= 3) return '🌤️';
@@ -1807,20 +1821,30 @@ function weatherCodeEmoji(code) {
   return '🌡️';
 }
 
+async function geocodeQuery(q) {
+  try {
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=zh`);
+    const data = await res.json();
+    if (!data.results?.length) return null;
+    const { latitude: lat, longitude: lon, name } = data.results[0];
+    return { lat, lon, name };
+  } catch { return null; }
+}
+
 async function geocodeTrip(title) {
   const key = 'wgeo_' + title;
   const cached = JSON.parse(localStorage.getItem(key) || 'null');
   if (cached && Date.now() - cached.ts < 7 * 86400000) return cached;
   const query = title.replace(/^\d{4}_/, '');
-  try {
-    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=zh`);
-    const data = await res.json();
-    if (!data.results?.length) return null;
-    const { latitude: lat, longitude: lon, name } = data.results[0];
-    const result = { lat, lon, name, ts: Date.now() };
-    localStorage.setItem(key, JSON.stringify(result));
-    return result;
-  } catch { return null; }
+  let result = await geocodeQuery(query);
+  if (!result) {
+    for (const [re, eng] of GEO_ALIASES) {
+      if (re.test(title)) { result = await geocodeQuery(eng); break; }
+    }
+  }
+  if (!result) return null;
+  localStorage.setItem(key, JSON.stringify({ ...result, ts: Date.now() }));
+  return result;
 }
 
 async function fetchTripWeather(trip, lat, lon) {
