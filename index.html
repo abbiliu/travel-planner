@@ -359,6 +359,31 @@
     .detail-intro-title { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
     .detail-intro-meta { font-size: 14px; color: #64748b; display: flex; align-items: center; gap: 8px; }
 
+    /* ── Weather Strip ── */
+    .weather-strip {
+      display: flex; overflow-x: auto; gap: 8px;
+      padding: 12px 16px; border-bottom: 1px solid #f1f5f9;
+      scrollbar-width: none;
+    }
+    .weather-strip::-webkit-scrollbar { display: none; }
+    .weather-day-cell {
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 52px; padding: 8px 6px; border-radius: 12px;
+      background: #f8fafc; border: 1.5px solid #e2e8f0; cursor: pointer; flex-shrink: 0;
+    }
+    .weather-day-cell.wx-active { background: #eff6ff; border-color: #134074; }
+    .weather-day-cell-emoji { font-size: 20px; line-height: 1.2; }
+    .weather-day-cell-hi { font-size: 13px; font-weight: 700; color: #1e293b; }
+    .weather-day-cell-date { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+    .weather-detail-bar {
+      padding: 8px 16px 4px; font-size: 13px; color: #475569;
+      background: #eff6ff; border-bottom: 1px solid #dbeafe; display: none;
+    }
+    .day-weather-row {
+      font-size: 13px; color: #64748b;
+      padding: 4px 14px 6px; border-top: 1px solid #f1f5f9;
+    }
+
     /* ── Day Card ── */
     .days-list { padding: 12px 16px; }
 
@@ -833,7 +858,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.2</span>
+      <span class="drawer-version">v2.3</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -1706,6 +1731,8 @@ function openTrip(idx) {
       <div class="detail-intro-title">${flag} ${esc(t.title)}</div>
       <div class="detail-intro-meta">${esc(t.range)} ${badge(t.status)}${cdHTML}</div>
     </div>
+    <div id="weather-strip"></div>
+    <div id="weather-detail-bar" class="weather-detail-bar"></div>
     <div class="days-list">`;
 
   t.days.forEach((day, i) => { html += dayHTML(day, i+1); });
@@ -1722,6 +1749,7 @@ function openTrip(idx) {
   currentTripIdx = idx;
   setContent(html);
   if (!shareMode) loadTripOrders(idx);
+  loadTripWeather(t);
 }
 
 function dayHTML(day, n) {
@@ -1758,8 +1786,119 @@ function dayHTML(day, n) {
     });
   }
 
-  h += '</div></div>';
+  h += '</div>';
+  if (day.date) {
+    const dk = day.date.toISOString().slice(0, 10).replace(/-/g, '');
+    h += `<div id="dw-${dk}" class="day-weather-row" style="display:none"></div>`;
+  }
+  h += '</div>';
   return h;
+}
+
+// ── Weather ───────────────────────────────────────────────
+function weatherCodeEmoji(code) {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '🌤️';
+  if (code <= 48) return '🌫️';
+  if (code <= 67) return '🌧️';
+  if (code <= 77) return '❄️';
+  if (code <= 82) return '🌦️';
+  if (code <= 99) return '⛈️';
+  return '🌡️';
+}
+
+async function geocodeTrip(title) {
+  const key = 'wgeo_' + title;
+  const cached = JSON.parse(localStorage.getItem(key) || 'null');
+  if (cached && Date.now() - cached.ts < 7 * 86400000) return cached;
+  const query = title.replace(/^\d{4}_/, '');
+  try {
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=zh`);
+    const data = await res.json();
+    if (!data.results?.length) return null;
+    const { latitude: lat, longitude: lon, name } = data.results[0];
+    const result = { lat, lon, name, ts: Date.now() };
+    localStorage.setItem(key, JSON.stringify(result));
+    return result;
+  } catch { return null; }
+}
+
+async function fetchTripWeather(trip, lat, lon) {
+  const key = 'wdata_' + trip.name;
+  const cached = JSON.parse(localStorage.getItem(key) || 'null');
+  if (cached && Date.now() - cached.ts < 3 * 3600000) return cached.days;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = trip.start > today ? trip.start : today;
+  const end = trip.end;
+  const fmt = d => d.toISOString().slice(0, 10);
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&start_date=${fmt(start)}&end_date=${fmt(end)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.daily) return null;
+    const days = data.daily.time.map((date, i) => ({
+      date, emoji: weatherCodeEmoji(data.daily.weathercode[i]),
+      hi: Math.round(data.daily.temperature_2m_max[i]),
+      lo: Math.round(data.daily.temperature_2m_min[i]),
+      rain: data.daily.precipitation_probability_max[i] ?? 0
+    }));
+    localStorage.setItem(key, JSON.stringify({ days, ts: Date.now() }));
+    return days;
+  } catch { return null; }
+}
+
+async function loadTripWeather(t) {
+  const stripEl = document.getElementById('weather-strip');
+  if (!stripEl) return;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (!t.end || t.end < today) return;
+  const daysUntilStart = t.start ? Math.round((t.start - today) / 86400000) : 0;
+  if (daysUntilStart > 16) return;
+  const geo = await geocodeTrip(t.name || t.title);
+  if (!geo) return;
+  const days = await fetchTripWeather(t, geo.lat, geo.lon);
+  if (!days?.length) return;
+  renderWeatherStrip(days);
+  days.forEach(d => renderDayWeather(d));
+}
+
+let wxActiveDate = null;
+function renderWeatherStrip(days) {
+  const strip = document.getElementById('weather-strip');
+  if (!strip) return;
+  strip.className = 'weather-strip';
+  strip.innerHTML = days.map(d => `
+    <div class="weather-day-cell" onclick="toggleWxDetail('${d.date}',${d.hi},${d.lo},${d.rain})">
+      <div class="weather-day-cell-emoji">${d.emoji}</div>
+      <div class="weather-day-cell-hi">${d.hi}°</div>
+      <div class="weather-day-cell-date">${d.date.slice(5).replace('-', '/')}</div>
+    </div>`).join('');
+}
+
+function toggleWxDetail(date, hi, lo, rain) {
+  const bar = document.getElementById('weather-detail-bar');
+  const cells = document.querySelectorAll('.weather-day-cell');
+  if (wxActiveDate === date) {
+    wxActiveDate = null;
+    bar.style.display = 'none';
+    cells.forEach(c => c.classList.remove('wx-active'));
+    return;
+  }
+  wxActiveDate = date;
+  bar.style.display = 'block';
+  bar.textContent = `${date.slice(5).replace('-', '/')}　最高 ${hi}°・最低 ${lo}°・降雨機率 ${rain}%`;
+  cells.forEach((c, i) => {
+    const d = c.querySelector('.weather-day-cell-date')?.textContent;
+    c.classList.toggle('wx-active', d === date.slice(5).replace('-', '/'));
+  });
+}
+
+function renderDayWeather(d) {
+  const dk = d.date.replace(/-/g, '');
+  const el = document.getElementById('dw-' + dk);
+  if (!el) return;
+  el.style.display = 'block';
+  el.textContent = `${d.emoji} 最高 ${d.hi}° · 最低 ${d.lo}° · 降雨 ${d.rain}%`;
 }
 
 // ── Expense ──────────────────────────────────────────────
