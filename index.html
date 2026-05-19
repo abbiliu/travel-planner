@@ -1431,6 +1431,7 @@ function getFlag(title) {
     [/英國|倫敦/, '🇬🇧'],
     [/澳洲/, '🇦🇺'],
   ];
+  if (/露營/.test(title)) return '⛺️';
   for (const [re, flag] of map) {
     if (re.test(title)) return flag;
   }
