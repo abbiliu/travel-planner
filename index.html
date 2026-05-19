@@ -1695,7 +1695,7 @@ function cardHTML(t) {
   const flag = getFlag(t.title);
   const countdown = getCountdown(t);
   const cdHTML = countdown ? `<span class="countdown">${countdown}</span>` : '';
-  const thumb = t.thumbUrl || SCENE_IMGS[idx % 3];
+  const thumb = driveImgUrl(t.thumbUrl, 400) || SCENE_IMGS[idx % 3];
   return `
     <div class="trip-card ${t.status === 'ongoing' ? 'ongoing' : t.status === 'done' ? 'done' : ''}" onclick="openTrip(${idx})">
       <div class="trip-card-body">
@@ -1755,7 +1755,7 @@ function openTrip(idx) {
 
 function dayHTML(day, n) {
   let h = '<div class="day-card">';
-  if (day.imageUrl) h += `<img class="day-img" src="${esc(day.imageUrl)}" alt="" loading="lazy">`;
+  if (day.imageUrl) h += `<img class="day-img" src="${esc(driveImgUrl(day.imageUrl, 1200) || day.imageUrl)}" alt="" loading="lazy">`;
   h += '<div class="day-header">';
   h += `<span class="day-num">Day ${n}</span>`;
   h += `<span class="day-date">${esc(day.dateLabel)}</span>`;
