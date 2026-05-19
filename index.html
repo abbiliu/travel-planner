@@ -1364,6 +1364,7 @@ function buildTrip(props, rows) {
   const days = [];
   const expenses = [];
   let cur = null;
+  let coverImageUrl = null;
 
   for (const row of rows.slice(1)) {
     if (!row || !row.length) continue;
@@ -1379,13 +1380,14 @@ function buildTrip(props, rows) {
     const expNote = (row[8] || '').trim();
     if (expItem) expenses.push({ item: expItem, amount: expAmt, note: expNote });
 
+    const rowImageUrl = (row[9] || '').trim();
+
     if (dateCell) {
-      const imageUrl = (row[9] || '').trim();
       const hotelUrl = hotelCell ? col5Cell || null : null;
       const noteCell = hotelCell ? '' : col5Cell;
       const parsedDate = parseDateLabel(dateCell, year);
       const dateLabel = parsedDate ? formatDateLabel(parsedDate) : dateCell;
-      cur = { dateLabel, date: parsedDate, hotel: hotelCell || null, hotelUrl, acts: [], imageUrl: imageUrl || null };
+      cur = { dateLabel, date: parsedDate, hotel: hotelCell || null, hotelUrl, acts: [], imageUrl: rowImageUrl || null };
       days.push(cur);
       if (actCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
     } else if (cur) {
@@ -1395,10 +1397,16 @@ function buildTrip(props, rows) {
       }
       const noteCell = hotelCell ? '' : col5Cell;
       if (actCell || detailCell) cur.acts.push({ act: actCell, detail: detailCell, note: noteCell });
+      if (rowImageUrl && !cur.imageUrl) cur.imageUrl = rowImageUrl;
+    } else if (rowImageUrl && !coverImageUrl) {
+      coverImageUrl = rowImageUrl;
     }
   }
 
   const validDays = days.filter(d => d.date);
+  if (coverImageUrl && validDays[0] && !validDays[0].imageUrl) {
+    validDays[0].imageUrl = coverImageUrl;
+  }
   const today = new Date(); today.setHours(0,0,0,0);
   const start = validDays[0]?.date ?? new Date(year, month-1, 1);
   const end   = validDays[validDays.length-1]?.date ?? start;
@@ -1409,7 +1417,7 @@ function buildTrip(props, rows) {
     ? `${year}/${fmt(start)}`
     : `${year}/${fmt(start)} ～ ${fmt(end)}`;
 
-  const thumbUrl = validDays[0]?.imageUrl || null;
+  const thumbUrl = validDays[0]?.imageUrl || coverImageUrl || null;
   return { name: props.title, title, year, month, status, range, start, end, days, expenses, expLabel, thumbUrl };
 }
 
