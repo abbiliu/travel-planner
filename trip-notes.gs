@@ -342,3 +342,28 @@ function initSheets() {
   Logger.log('請將此 ID 填入 IMAGE_FOLDER_ID 後重新部署');
   Logger.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
+
+// ── 一次性工具：寫入 _shares public_token（執行一次即可，完成後可刪除）──────────
+function fillSharesPublicTokens() {
+  const SS_ID = '1GTnDgfwZVAvEYySHPf8Kzo2pBv4T-81zfBPDU22aQe4';
+  const tokens = {
+    'astravel': 'N6epWWbPuLNi',
+    'family':   '37UlCAS4EqGt',
+    'nitta':    'RrgUy8YW2t5L',
+    'sandy':    'EjdVNGhFVelh',
+    'mars':     'C7F391OwVJFF',
+  };
+  const sheet = SpreadsheetApp.openById(SS_ID).getSheetByName('_shares');
+  const data  = sheet.getDataRange().getValues();
+  let updated = 0;
+  for (let i = 1; i < data.length; i++) {
+    const id = (data[i][0] || '').trim();
+    if (tokens[id] && !data[i][5]) {
+      sheet.getRange(i + 1, 6).setValue(tokens[id]);
+      Logger.log(`✅ ${id} → ${tokens[id]}`);
+      updated++;
+    }
+  }
+  Logger.log(`共更新 ${updated} 列`);
+}
+
