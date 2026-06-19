@@ -29,6 +29,12 @@
   <meta name="apple-mobile-web-app-title" content="旅行規劃站">
   <link rel="apple-touch-icon" href="app-icon.png?v=6">
   <meta name="theme-color" content="#134074">
+  <meta name="description" content="個人旅遊行程規劃，隨時查看行程、花費與住宿資訊">
+  <meta property="og:title" content="旅行規劃站">
+  <meta property="og:description" content="個人旅遊行程規劃，隨時查看行程、花費與住宿資訊">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://abbiliu.github.io/travel-planner/app-icon.png">
+  <meta property="og:url" content="https://abbiliu.github.io/travel-planner/">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -2811,8 +2817,25 @@ function fpBuildInferSection() {
 
 // ── Init ─────────────────────────────────────────────────
 
+function showAccessDenied() {
+  document.getElementById('content').innerHTML = `
+    <div class="center-msg" style="padding-top:80px">
+      <div style="font-size:48px;margin-bottom:16px">✈️</div>
+      <div style="font-weight:700;font-size:18px;color:#134074;margin-bottom:8px">旅行規劃站</div>
+      <div style="color:#64748b;font-size:15px;line-height:1.6">請使用分享連結進入<br>如需取得連結，請聯絡行程主辦人</div>
+    </div>`;
+  document.getElementById('header').style.display = 'none';
+}
+
 async function init() {
   try {
+    // ?owner=xxx → 存入 localStorage 並移除 URL 參數（下次訪問只需主網址）
+    const urlOwnerParam = new URLSearchParams(location.search).get('owner');
+    if (urlOwnerParam) {
+      saveOwnerToken(urlOwnerParam);
+      history.replaceState(null, '', location.origin + location.pathname);
+    }
+
     const urlShareId = new URLSearchParams(location.search).get('share');
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
     if (urlShareId) {
@@ -2840,7 +2863,10 @@ async function init() {
     if (shareId && sharesProps) {
       const sharesData = await api(`/values/${encodeURIComponent('_shares')}!A:Z`);
       for (const row of sharesData.values || []) {
-        if ((row[0] || '').trim() === shareId) {
+        const rowInternalId  = (row[0] || '').trim(); // A欄：舊短 ID（向下相容）
+        const rowPublicToken = (row[5] || '').trim(); // F欄：新亂數 token（優先比對）
+        const matched = rowPublicToken ? rowPublicToken === shareId : rowInternalId === shareId;
+        if (matched) {
           shareConfig = {
             displayName: (row[1] || '').trim(),
             sheetNames: (row[2] || '').split('|').map(s => s.trim()).filter(Boolean),
@@ -2871,6 +2897,9 @@ async function init() {
       document.title = label;
       document.getElementById('headerTitle').innerHTML = `<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> ${esc(label)}`;
       document.getElementById('menuBtn').style.display = 'none';
+    } else if (!getOwnerToken()) {
+      showAccessDenied();
+      return;
     } else {
       renderDrawer();
     }
