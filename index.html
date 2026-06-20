@@ -7,20 +7,23 @@
   <link rel="manifest" href="manifest.json">
   <script>
     (function() {
-      const shareParam = new URLSearchParams(location.search).get('share');
-      if (!shareParam) return;
+      const params = new URLSearchParams(location.search);
+      const shareParam = params.get('share');
+      const ownerParam = params.get('owner');
+      if (!shareParam && !ownerParam) return;
       const link = document.querySelector('link[rel="manifest"]');
       if (!link) return;
       const isIOS = /iP(hone|ad|od)/i.test(navigator.userAgent);
       if (isIOS) {
-        // iOS: manifest 的 start_url 會覆蓋當前 URL。移除 manifest 讓 iOS 直接存當前 URL（含 ?share= 參數）
+        // iOS: 移除 manifest，讓 iOS 直接以當前 URL（含 token 參數）作為 start_url
         link.remove();
-      } else {
-        // Android/其他: blob manifest 可正常使用，設正確的 start_url
+      } else if (shareParam) {
+        // Android: blob manifest 注入 share token 至 start_url
         const m = {"name":"旅行規劃站","short_name":"旅行","description":"旅遊行程規劃，隨時查看","start_url":"./index.html?share="+encodeURIComponent(shareParam),"display":"standalone","orientation":"portrait","theme_color":"#134074","background_color":"#ffffff","icons":[{"src":"app-icon.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]};
         const blob = new Blob([JSON.stringify(m)], {type: 'application/manifest+json'});
         link.href = URL.createObjectURL(blob);
       }
+      // Android + owner: 不把 owner token 嵌入 manifest（避免公開），走 access denied 輸入框處理
     })();
   </script>
   <script src="https://accounts.google.com/gsi/client" async></script>
@@ -2819,21 +2822,51 @@ function fpBuildInferSection() {
 
 function showAccessDenied() {
   document.getElementById('content').innerHTML = `
-    <div class="center-msg" style="padding-top:80px">
+    <div class="center-msg" style="padding-top:72px;padding-bottom:40px">
       <div style="font-size:48px;margin-bottom:16px">✈️</div>
       <div style="font-weight:700;font-size:18px;color:#134074;margin-bottom:8px">旅行規劃站</div>
-      <div style="color:#64748b;font-size:15px;line-height:1.6">請使用分享連結進入<br>如需取得連結，請聯絡行程主辦人</div>
+      <div style="color:#64748b;font-size:15px;line-height:1.6;margin-bottom:28px">請貼上邀請連結進入</div>
+      <div style="max-width:320px;margin:0 auto">
+        <input id="accessCodeInput" type="url" inputmode="url" placeholder="貼上分享連結 https://..."
+          style="width:100%;padding:12px 14px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:15px;outline:none;color:#1e293b;margin-bottom:10px"
+          onkeydown="if(event.key==='Enter')applyAccessCode()">
+        <button onclick="applyAccessCode()"
+          style="width:100%;padding:13px;background:#134074;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.5px">進入</button>
+        <div id="accessCodeError" style="color:#ef4444;font-size:13px;margin-top:10px;display:none">連結無效，請確認後重試</div>
+      </div>
+      <div style="color:#94a3b8;font-size:13px;margin-top:24px">如需取得連結，請聯絡行程主辦人</div>
     </div>`;
   document.getElementById('header').style.display = 'none';
 }
 
+function applyAccessCode() {
+  const raw = (document.getElementById('accessCodeInput').value || '').trim();
+  if (!raw) return;
+  let shareToken = null, ownerToken = null;
+  try {
+    const urlStr = raw.startsWith('http') ? raw : 'https://x.com/' + raw.replace(/^\?/, '?dummy&');
+    const u = new URL(urlStr);
+    shareToken = u.searchParams.get('share');
+    ownerToken = u.searchParams.get('owner');
+  } catch (_) {}
+  // Bare token fallback: treat as share token
+  if (!shareToken && !ownerToken) shareToken = raw;
+  if (ownerToken) saveOwnerToken(ownerToken);
+  if (shareToken) localStorage.setItem('pwa_share_token', shareToken);
+  location.reload();
+}
+
 async function init() {
   try {
-    // ?owner=xxx → 存入 localStorage 並移除 URL 參數（下次訪問只需主網址）
+    // ?owner=xxx → 存入 localStorage；iOS 保留 URL 讓「加入主畫面」能捕捉 token
     const urlOwnerParam = new URLSearchParams(location.search).get('owner');
     if (urlOwnerParam) {
       saveOwnerToken(urlOwnerParam);
-      history.replaceState(null, '', location.origin + location.pathname);
+      const _ownerIsIOS = /iP(hone|ad|od)/i.test(navigator.userAgent);
+      if (!_ownerIsIOS) {
+        history.replaceState(null, '', location.origin + location.pathname);
+      }
+      // iOS: URL 保持 ?owner=xxx，讓用戶可在此頁面直接「加入主畫面」
     }
 
     const urlShareId = new URLSearchParams(location.search).get('share');
