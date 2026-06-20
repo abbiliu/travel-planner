@@ -2851,9 +2851,12 @@ function applyAccessCode() {
   } catch (_) {}
   // Bare token fallback: treat as share token
   if (!shareToken && !ownerToken) shareToken = raw;
-  if (ownerToken) saveOwnerToken(ownerToken);
-  if (shareToken) localStorage.setItem('pwa_share_token', shareToken);
-  location.reload();
+  // Navigate to URL with token param — avoids localStorage being cleared by !isStandalone check on reload
+  if (shareToken) {
+    location.href = location.pathname + '?share=' + encodeURIComponent(shareToken);
+  } else if (ownerToken) {
+    location.href = location.pathname + '?owner=' + encodeURIComponent(ownerToken);
+  }
 }
 
 async function init() {

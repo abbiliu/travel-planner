@@ -1,4 +1,4 @@
-const CACHE = 'travel-v32';
+const CACHE = 'travel-v33';
 const SHARE_CACHE = 'pwa-share-v1';
 const SHELL = [
   './index.html',
