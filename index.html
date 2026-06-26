@@ -867,7 +867,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.6</span>
+      <span class="drawer-version">v2.7</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -2876,10 +2876,8 @@ async function init() {
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
     if (urlShareId) {
       localStorage.setItem('pwa_share_token', urlShareId);
-    } else if (!isStandalone) {
-      localStorage.removeItem('pwa_share_token');
     }
-    const shareId = urlShareId || (isStandalone ? localStorage.getItem('pwa_share_token') : null);
+    const shareId = urlShareId || localStorage.getItem('pwa_share_token');
 
     const meta = await api('?fields=sheets.properties');
     const allSheetProps = meta.sheets.map(s => s.properties);
