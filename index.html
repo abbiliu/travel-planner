@@ -867,7 +867,7 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.7</span>
+      <span class="drawer-version">v2.8</span>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -2931,7 +2931,7 @@ async function init() {
       document.title = label;
       document.getElementById('headerTitle').innerHTML = `<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> ${esc(label)}`;
       document.getElementById('menuBtn').style.display = 'none';
-    } else if (!getOwnerToken()) {
+    } else if (!getOwnerToken() && !isStandalone) {
       showAccessDenied();
       return;
     } else {
