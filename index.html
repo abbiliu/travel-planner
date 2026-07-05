@@ -2899,7 +2899,7 @@ async function init() {
       for (const row of sharesData.values || []) {
         const rowInternalId  = (row[0] || '').trim(); // A欄：舊短 ID（向下相容）
         const rowPublicToken = (row[5] || '').trim(); // F欄：新亂數 token（優先比對）
-        const matched = rowPublicToken ? rowPublicToken === shareId : rowInternalId === shareId;
+        const matched = (rowPublicToken && rowPublicToken === shareId) || rowInternalId === shareId;
         if (matched) {
           shareConfig = {
             displayName: (row[1] || '').trim(),
