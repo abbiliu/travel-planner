@@ -26,7 +26,6 @@
       // Android + owner: 不把 owner token 嵌入 manifest（避免公開），走 access denied 輸入框處理
     })();
   </script>
-  <script src="https://accounts.google.com/gsi/client" async></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="旅行規劃站">
@@ -142,6 +141,14 @@
       gap: 4px;
     }
     .drawer-refresh-btn:active { background: #dbeafe; }
+    .drawer-settings-btn {
+      background: none;
+      border: none;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px;
+      cursor: pointer;
+    }
     .refresh-spin { display: inline-block; }
     .refresh-spin.spinning { animation: spin 0.5s linear infinite; }
 
@@ -269,32 +276,6 @@
     .fp-import-btn.secondary {
       background: #f1f5f9; color: #334155; margin-top: 6px;
     }
-    .fp-infer-stats { font-size: 13px; color: #64748b; margin: 4px 0 10px; }
-    .fp-infer-card {
-      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-      padding: 12px 14px; margin-bottom: 8px;
-    }
-    .fp-infer-card.accepted { border-color: #86efac; background: #f0fdf4; }
-    .fp-infer-card.skipped { opacity: 0.6; }
-    .fp-infer-card-header {
-      display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;
-    }
-    .fp-infer-card-title { font-size: 14px; font-weight: 700; color: #1e293b; }
-    .fp-infer-card-date { font-size: 12px; color: #94a3b8; margin-top: 2px; }
-    .fp-infer-card-result {
-      font-size: 13px; color: #334155; margin: 6px 0;
-      display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    }
-    .fp-conf-badge { font-size: 12px; font-weight: 700; flex-shrink: 0; }
-    .fp-infer-card-actions { display: flex; gap: 8px; margin-top: 8px; }
-    .fp-card-btn {
-      padding: 5px 14px; border-radius: 8px; border: none;
-      font-size: 13px; cursor: pointer; font-weight: 600;
-    }
-    .fp-card-btn.accept { background: #134074; color: #fff; }
-    .fp-card-btn.skip   { background: #f1f5f9; color: #64748b; }
-    .fp-card-btn.reset  { background: #f1f5f9; color: #94a3b8; font-weight: 400; font-size: 12px; }
-
     .fp-map-wrap { margin: 12px 0 16px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
 
     /* ── Pages ── */
@@ -484,94 +465,6 @@
     }
     .map-btn:active { background: #dbeafe; }
 
-    /* ── More Menu ── */
-    .more-btn { position: relative; }
-
-    .more-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.20);
-      min-width: 190px;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-6px) scale(0.96);
-      transition: opacity 0.15s ease, transform 0.15s ease;
-      z-index: 300;
-    }
-    .more-dropdown.open {
-      opacity: 1;
-      pointer-events: all;
-      transform: translateY(0) scale(1);
-    }
-    .more-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 13px 16px;
-      font-size: 15px;
-      color: #1e293b;
-      cursor: pointer;
-      border-bottom: 1px solid #f1f5f9;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .more-item:last-child { border-bottom: none; }
-    .more-item:active { background: #eff6ff; }
-    .more-item-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #cbd5e1;
-      flex-shrink: 0;
-    }
-    .more-item-dot.on { background: #4ade80; }
-
-    /* ── Orders Section ── */
-    .orders-section {
-      margin: 4px 16px 28px;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      overflow: hidden;
-    }
-    .orders-header {
-      background: #f8fafc;
-      padding: 10px 14px;
-      border-bottom: 1px solid #e2e8f0;
-      font-size: 15px; font-weight: 700; color: #374151;
-    }
-    .orders-state {
-      padding: 18px 14px;
-      text-align: center; color: #94a3b8; font-size: 14px;
-    }
-    .orders-connect-btn {
-      display: inline-block; margin-top: 10px;
-      padding: 8px 20px;
-      background: #134074; color: #fff;
-      border: none; border-radius: 8px;
-      font-size: 14px; cursor: pointer;
-    }
-    .orders-connect-btn:active { background: #1d4ed8; }
-    .ai-key-banner { padding: 10px 14px; background: #fffbeb; border-top: 1px solid #fde68a;
-      font-size: 12px; color: #92400e; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .ai-key-input { flex: 1; min-width: 160px; padding: 4px 8px; border: 1px solid #fcd34d;
-      border-radius: 6px; font-size: 12px; }
-    .ai-key-save { padding: 4px 10px; background: #f59e0b; color: #fff;
-      border: none; border-radius: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; }
-    .email-card { padding: 10px 14px; border-top: 1px solid #f1f5f9; }
-    .email-card:first-child { border-top: none; }
-    .email-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .email-type-tag { font-size: 11px; font-weight: 600; color: #475569; flex: 1; }
-    .email-title { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 2px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .email-detail { font-size: 11px; color: #64748b; margin-bottom: 2px; }
-    .email-summary { font-size: 13px; font-weight: 500; color: #1e293b; flex: 1; min-width: 0;
-      line-height: 1.45; word-break: break-all; }
-    .email-loading { font-size: 12px; color: #94a3b8; font-style: italic; flex: 1; }
-    .email-date { font-size: 12px; color: #94a3b8; white-space: nowrap; flex-shrink: 0; }
-    .email-from { font-size: 11px; color: #94a3b8; }
-
     /* ── Card Thumbnail ── */
     .trip-card-body { display: flex; align-items: center; gap: 12px; }
     .trip-card-text { flex: 1; min-width: 0; }
@@ -725,77 +618,6 @@
     .cal-work-tag    { font-size: 8px; font-weight: 700; color: #f59e0b; text-align: center; line-height: 1; margin-bottom: 2px; }
     .cal-desc        { font-size: 9px; color: #94a3b8; text-align: center; line-height: 1.2; margin-bottom: 2px; overflow: hidden; white-space: nowrap; }
 
-    /* ── Notes ── */
-    #notesBtn { display:none;align-items:center;gap:4px;padding:5px 10px;background:#134074;color:#fff;border:none;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap; }
-    #notesBtn:active { opacity:.8; }
-
-    .notes-filter { display:flex;gap:8px;padding:12px 16px 8px;border-bottom:1px solid #f1f5f9;position:sticky;top:54px;background:#fff;z-index:10; }
-    .notes-filter-btn { padding:5px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;cursor:pointer; }
-    .notes-filter-btn.active { background:#134074;color:#fff;border-color:#134074; }
-
-    .notes-date-group { padding:14px 16px 4px; }
-    .notes-date-label { font-size:13px;font-weight:700;color:#64748b;letter-spacing:.02em; }
-
-    .note-card { margin:0 12px 10px;background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden; }
-    .note-card-top { display:flex;align-items:flex-start;padding:12px 12px 8px;gap:8px; }
-    .note-card-icon { font-size:16px;flex-shrink:0;padding-top:1px; }
-    .note-card-meta { flex:1;min-width:0; }
-    .note-card-author { font-size:13px;font-weight:700;color:#1e293b; }
-    .note-card-time { font-size:11px;color:#94a3b8; }
-    .note-card-menu-btn { background:none;border:none;font-size:20px;color:#94a3b8;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0; }
-    .note-card-text { padding:0 12px 12px;font-size:14px;color:#334155;line-height:1.6;white-space:pre-wrap;word-break:break-word; }
-    .note-card-expense { margin:0 12px 10px;padding:6px 10px;background:#fef9c3;border-radius:8px;font-size:13px;color:#713f12; }
-    .note-image-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:2px; }
-    .note-image-thumb { aspect-ratio:1;object-fit:cover;width:100%;cursor:pointer;display:block; }
-    .note-image-more { aspect-ratio:1;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700;cursor:pointer; }
-    .note-sync-dot { display:inline-block;width:6px;height:6px;border-radius:50%;margin-left:4px;vertical-align:middle; }
-    .note-sync-syncing { background:#f59e0b;animation:syncpulse 1s infinite; }
-    .note-sync-failed  { background:#ef4444; }
-    @keyframes syncpulse { 0%,100%{opacity:1}50%{opacity:.3} }
-
-    .fab { position:fixed;bottom:24px;right:20px;width:56px;height:56px;background:#134074;color:#fff;border-radius:50%;border:none;font-size:28px;box-shadow:0 4px 16px rgba(30,64,175,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50; }
-    .fab:active { transform:scale(.93); }
-
-    .fullscreen-overlay { position:fixed;inset:0;background:#fff;z-index:150;display:flex;flex-direction:column;overflow:hidden; }
-    .overlay-header { display:flex;align-items:center;padding:0 12px;height:54px;border-bottom:1px solid #f1f5f9;flex-shrink:0;background:#fff; }
-    .overlay-cancel { font-size:15px;color:#64748b;background:none;border:none;cursor:pointer;padding:8px 6px; }
-    .overlay-title  { flex:1;text-align:center;font-size:16px;font-weight:700;color:#1e293b; }
-    .overlay-save   { font-size:15px;font-weight:700;color:#134074;background:none;border:none;cursor:pointer;padding:8px 6px; }
-    .overlay-body   { flex:1;overflow-y:auto;padding:16px; }
-
-    .form-section-label { font-size:12px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;margin-top:16px; }
-    .form-section-label:first-child { margin-top:0; }
-    .form-cat-btns { display:flex;gap:8px;margin-bottom:4px; }
-    .form-cat-btn { flex:1;padding:9px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:14px;cursor:pointer;text-align:center; }
-    .form-cat-btn.active { border-color:#134074;background:#eff6ff;color:#134074;font-weight:600; }
-    .form-date-row { display:flex;align-items:center;gap:10px; }
-    .form-select { flex:1;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;background:#fff; }
-    .form-checkbox-label { display:flex;align-items:center;gap:6px;font-size:13px;color:#64748b;white-space:nowrap;cursor:pointer; }
-    .form-textarea { width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;line-height:1.6;min-height:120px;resize:none;font-family:inherit; }
-    .form-textarea:focus { outline:none;border-color:#134074; }
-    .form-input { width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px; }
-    .form-input:focus { outline:none;border-color:#134074; }
-    .form-row { display:flex;gap:8px; }
-    .form-add-photo { display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px dashed #cbd5e1;border-radius:10px;color:#64748b;font-size:14px;cursor:pointer;background:none;width:100%;box-sizing:border-box; }
-    .form-photo-preview { display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px; }
-    .form-photo-thumb { position:relative;aspect-ratio:1; }
-    .form-photo-thumb img { width:100%;height:100%;object-fit:cover;border-radius:8px; }
-    .form-photo-remove { position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:#ef4444;color:#fff;border-radius:50%;border:none;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer; }
-    .form-identity-row { display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid #f1f5f9;margin-top:16px; }
-    .form-identity-label { font-size:13px;color:#64748b; }
-    .form-identity-name { font-size:13px;font-weight:700;color:#134074;cursor:pointer; }
-
-    .identity-option { display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1.5px solid #e2e8f0;margin-bottom:8px;cursor:pointer;background:#fff; }
-    .identity-option.selected { border-color:#134074;background:#eff6ff; }
-    .identity-radio { width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-    .identity-radio.checked { border-color:#134074;background:#134074; }
-    .identity-radio.checked::after { content:'';width:6px;height:6px;background:#fff;border-radius:50%;display:block; }
-    .identity-name { font-size:15px;color:#1e293b; }
-
-    .img-preview-overlay { position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center; }
-    .img-preview-img { max-width:100%;max-height:calc(100vh - 80px);object-fit:contain; }
-    .img-preview-close { position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center; }
-    .img-preview-counter { position:absolute;bottom:24px;color:rgba(255,255,255,.7);font-size:13px; }
   </style>
 </head>
 <body>
@@ -812,22 +634,6 @@
         <path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z"/>
       </svg>
     </button>
-    <button id="notesBtn" onclick="openNotes()"><svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor"><path d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54H360q-66 0-113 47t-47 113v382q-16-9-27.5-24T158-276L81-710Zm719 390H640v160l160-160Z"/></svg> Notes</button>
-    <div id="moreBtnWrap" style="position:relative">
-      <button class="icon-btn more-btn" id="moreBtn" onclick="toggleMore()">
-        <svg xmlns="http://www.w3.org/2000/svg" height="22px" viewBox="0 -960 960 960" width="22px" fill="currentColor">
-          <path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/>
-        </svg>
-      </button>
-      <div class="more-dropdown" id="moreDropdown">
-        <div class="more-item" id="moreGmailItem" onclick="closeMore();toggleGmail()">
-          <span>📧</span><span style="flex:1">連結 Gmail</span><span class="more-item-dot" id="moreGmailDot"></span>
-        </div>
-        <div class="more-item" onclick="closeMore();openSettings()">
-          <span>⚙️</span><span>設定 API Key</span>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Settings Modal -->
@@ -835,20 +641,8 @@
     <div style="background:#fff;border-radius:16px;padding:24px;margin:20px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.2);">
       <div style="font-size:18px;font-weight:700;color:#1e293b;margin-bottom:6px;">⚙️ 設定</div>
 
-      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">OpenAI API Key</div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">用於 AI 解析信件內容，存在本裝置，不會上傳。</div>
-      <input id="settingsKeyInput" type="password" placeholder="sk-..."
-        style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:6px;" />
-      <div id="settingsKeyStatus" style="font-size:12px;height:18px;margin-bottom:16px;"></div>
-
-      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Apps Script URL</div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">用於 Trip Notes 共筆功能，存在本裝置，不會上傳。</div>
-      <input id="settingsGasInput" type="text" placeholder="https://script.google.com/macros/s/..."
-        style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:6px;" />
-      <div id="settingsGasStatus" style="font-size:12px;height:18px;margin-bottom:16px;"></div>
-
       <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Owner Token</div>
-      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">設定後，從主網址也可使用 Trip Notes（無需加 ?share= 參數）。</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">設定後，從主網址（不加 ?share= 參數）也能直接進入。</div>
       <input id="settingsOwnerTokenInput" type="text" placeholder="例如：astravel"
         style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;margin-bottom:6px;" />
       <div id="settingsOwnerTokenStatus" style="font-size:12px;height:18px;margin-bottom:14px;"></div>
@@ -867,7 +661,10 @@
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
     <div id="drawerList"></div>
     <div class="drawer-footer">
-      <span class="drawer-version">v2.8</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="drawer-version">v2.9</span>
+        <button class="drawer-settings-btn" onclick="openSettings()" title="設定">⚙️</button>
+      </div>
       <button class="drawer-refresh-btn" onclick="refreshApp()"><span class="refresh-spin">↻</span> 重新整理</button>
     </div>
   </div>
@@ -880,303 +677,11 @@
 
 </div>
 <script>
-// ── Gmail OAuth ──────────────────────────────────────────
-const CLIENT_ID  = '620169864836-55oo9mnt42lirj233i4fkrcnssmc9kbu.apps.googleusercontent.com';
-const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
-const GMAIL_BASE  = 'https://gmail.googleapis.com/gmail/v1/users/me';
-function getOpenAIKey() { return localStorage.getItem('openai_api_key') || ''; }
-
-let gToken       = null;
-let tokenClient  = null;
-let gmailLabels  = null;
-let labelConfig  = {};
 let currentTripIdx = null;
 
-function tryInitGmail() {
-  if (window.google?.accounts?.oauth2) {
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: GMAIL_SCOPE,
-      callback: async (resp) => {
-        if (resp.error) { console.error('OAuth error', resp); return; }
-        gToken = resp.access_token;
-        gmailLabels = null;
-        updateGmailBtn(true);
-        if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
-      }
-    });
-    updateGmailBtn(false);
-  } else {
-    setTimeout(tryInitGmail, 200);
-  }
-}
-
-function toggleGmail() {
-  if (gToken) {
-    google.accounts.oauth2.revoke(gToken, () => {});
-    gToken = null; gmailLabels = null;
-    updateGmailBtn(false);
-    const el = document.getElementById('trip-orders');
-    if (el) el.innerHTML = ordersDisconnectedHTML();
-  } else if (tokenClient) {
-    tokenClient.requestAccessToken({ prompt: '' });
-  }
-}
-
-function updateGmailBtn(on) {
-  const dot = document.getElementById('moreGmailDot');
-  if (dot) dot.classList.toggle('on', on);
-  const item = document.getElementById('moreGmailItem');
-  if (item) item.title = on ? '已連結 Gmail（點擊斷開）' : '連結 Gmail 查看訂單';
-}
-
-function toggleMore() {
-  document.getElementById('moreDropdown').classList.toggle('open');
-}
-
-function closeMore() {
-  document.getElementById('moreDropdown').classList.remove('open');
-}
-
-document.addEventListener('click', (e) => {
-  const btn = document.getElementById('moreBtn');
-  const dropdown = document.getElementById('moreDropdown');
-  if (btn && dropdown && !btn.contains(e.target) && !dropdown.contains(e.target)) {
-    dropdown.classList.remove('open');
-  }
-});
-
-async function gmailGet(path) {
-  const r = await fetch(`${GMAIL_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${gToken}` }
-  });
-  if (r.status === 401) { gToken = null; updateGmailBtn(false); throw new Error('Token 過期，請重新連線'); }
-  if (!r.ok) throw new Error(`Gmail API ${r.status}`);
-  return r.json();
-}
-
-function charOverlap(a, b) {
-  let n = 0;
-  for (const ch of a) if (b.includes(ch)) n++;
-  return n;
-}
-
-async function getLabelId(tripName) {
-  if (!gmailLabels) {
-    const data = await gmailGet('/labels');
-    gmailLabels = data.labels || [];
-  }
-
-  // _config 手動覆蓋（label 格式：YYYY/YYMM 名稱 或純標籤名，比對最後一段）
-  const override = labelConfig[tripName];
-  if (override) {
-    return gmailLabels.find(l => l.name.split('/').pop() === override)?.id
-        || gmailLabels.find(l => l.name.split('/').pop().startsWith(override))?.id
-        || null;
-  }
-
-  // 自動模糊比對
-  const yymm = tripName.match(/^(\d{4})/)?.[1];
-  if (!yymm) return null;
-
-  const SYSTEM = new Set(['INBOX','SENT','DRAFT','TRASH','SPAM','STARRED','IMPORTANT','UNREAD','CHAT']);
-  // 取 label 最後一段比對 YYMM（支援 旅行/YYMM、YYYY/YYMM、純 YYMM）
-  const candidates = gmailLabels.filter(l => {
-    if (l.name.startsWith('CATEGORY_') || SYSTEM.has(l.name)) return false;
-    return l.name.split('/').pop().startsWith(yymm);
-  });
-  if (!candidates.length) return null;
-
-  // 單一或多個候選都要檢查字元重疊，0 分視為無對應
-  const tripTitle = tripName.replace('_', ' ').slice(4).trim();
-  let best = null, bestScore = 0;
-  for (const c of candidates) {
-    const labelTitle = c.name.split('/').pop().replace(/^\d{4}\s*/, '');
-    const score = charOverlap(tripTitle, labelTitle);
-    if (score > bestScore) { bestScore = score; best = c; }
-  }
-  return best ? best.id : null;
-}
-
-function getHeader(msg, name) {
-  return msg.payload?.headers?.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
-}
-
-function extractEmailBody(payload) {
-  if (!payload) return '';
-  function decode(data) {
-    try { return decodeURIComponent(escape(atob(data.replace(/-/g,'+').replace(/_/g,'/')))); }
-    catch(e) { return atob(data.replace(/-/g,'+').replace(/_/g,'/')); }
-  }
-  function stripHtml(html) {
-    return html.replace(/<style[\s\S]*?<\/style>/gi,' ')
-               .replace(/<script[\s\S]*?<\/script>/gi,' ')
-               .replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-  }
-  function find(part) {
-    if (part.mimeType === 'text/plain' && part.body?.data) return decode(part.body.data);
-    if (part.mimeType === 'text/html'  && part.body?.data) return stripHtml(decode(part.body.data));
-    if (part.parts) {
-      for (const p of part.parts) if (p.mimeType === 'text/plain' && p.body?.data) return decode(p.body.data);
-      for (const p of part.parts) if (p.mimeType === 'text/html'  && p.body?.data) return stripHtml(decode(p.body.data));
-      for (const p of part.parts) { const r = find(p); if (r) return r; }
-    }
-    return '';
-  }
-  return find(payload);
-}
-
-async function getAISummary(msgId, subject, fromName, body) {
-  const apiKey = getOpenAIKey();
-  if (!apiKey) return null;
-  const key = `email_ai2_${msgId}`;
-  const cached = localStorage.getItem(key);
-  if (cached) { try { return JSON.parse(cached); } catch(e) {} }
-  const systemPrompt = `你是旅遊訂單信件分析助理。根據信件類型回傳對應 JSON，未知欄位填空字串：
-hotel:      {"type":"hotel",      "name":"飯店名","checkin":"MM/DD","checkout":"MM/DD","ref":"訂單號"}
-flight:     {"type":"flight",     "airline":"航空公司","flightNo":"航班號","route":"出發地→目的地","date":"MM/DD","ref":"訂單號"}
-transport:  {"type":"transport",  "vendor":"服務商","date":"MM/DD HH:MM","detail":"接機/送機說明"}
-ticket:     {"type":"ticket",     "name":"票名或活動名","date":"MM/DD","qty":"張數","ref":"訂單號"}
-restaurant: {"type":"restaurant", "name":"餐廳名","date":"MM/DD HH:MM","pax":"人數"}
-insurance:  {"type":"insurance",  "company":"保險公司","period":"保障期間","ref":"保單號"}
-other:      {"type":"other",      "name":"主旨重點","date":"MM/DD","detail":"一句說明"}`;
-  try {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        max_tokens: 150,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `主旨：${subject}\n寄件人：${fromName}\n\n${body.slice(0,1500)}` }
-        ]
-      })
-    });
-    if (!r.ok) throw new Error(`OpenAI ${r.status}`);
-    const data = await r.json();
-    const result = JSON.parse(data.choices[0].message.content);
-    localStorage.setItem(key, JSON.stringify(result));
-    return result;
-  } catch(e) {
-    console.warn('AI summary failed:', e);
-    return null;
-  }
-}
-
-const EMAIL_TYPE_LABEL = {hotel:'飯店',flight:'機票',transport:'接送',ticket:'票券',restaurant:'餐廳',insurance:'保險',other:'其他'};
-const EMAIL_TYPE_ICON  = {hotel:'🏨',flight:'✈️',transport:'🚐',ticket:'🎫',restaurant:'🍽️',insurance:'🛡️',other:'📦'};
-
-function emailCardHTML(msg, aiSummary, loading) {
-  const subject  = getHeader(msg, 'Subject') || '（無主旨）';
-  const from     = getHeader(msg, 'From');
-  const dateRaw  = getHeader(msg, 'Date');
-  const d = new Date(dateRaw);
-  const mailDate = isNaN(d) ? '' : `${d.getMonth()+1}/${d.getDate()}`;
-  const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim() || from;
-
-  if (loading) {
-    return `<div class="email-card" data-msgid="${esc(msg.id)}">
-      <div class="email-card-head"><span class="email-loading">摘要產生中⋯</span><span class="email-date">${esc(mailDate)}</span></div>
-      <div class="email-from">${esc(fromName)}</div>
-    </div>`;
-  }
-
-  // 舊格式（含 summary 欄位）或無摘要
-  if (!aiSummary || aiSummary.summary !== undefined) {
-    const line = aiSummary
-      ? `<span class="email-summary">${esc(aiSummary.icon||'')} ${esc(aiSummary.summary)}</span>`
-      : `<span class="email-summary">${esc(subject)}</span>`;
-    return `<div class="email-card" data-msgid="${esc(msg.id)}">
-      <div class="email-card-head">${line}<span class="email-date">${esc(mailDate)}</span></div>
-      <div class="email-from">${esc(fromName)}</div>
-    </div>`;
-  }
-
-  // 新結構化格式
-  const type  = aiSummary.type || 'other';
-  const icon  = EMAIL_TYPE_ICON[type]  || '📦';
-  const label = EMAIL_TYPE_LABEL[type] || '其他';
-  let title = '', detail = '';
-  switch (type) {
-    case 'hotel':
-      title  = aiSummary.name;
-      detail = [
-        aiSummary.checkin && aiSummary.checkout ? `入住 ${aiSummary.checkin} → 退房 ${aiSummary.checkout}` : (aiSummary.checkin || aiSummary.checkout || ''),
-        aiSummary.ref ? `訂單 ${aiSummary.ref}` : ''
-      ].filter(Boolean).join(' · ');
-      break;
-    case 'flight':
-      title  = [aiSummary.airline, aiSummary.flightNo].filter(Boolean).join(' ');
-      detail = [aiSummary.route, aiSummary.date, aiSummary.ref ? `訂單 ${aiSummary.ref}` : ''].filter(Boolean).join(' · ');
-      break;
-    case 'transport':
-      title  = aiSummary.vendor;
-      detail = [aiSummary.date, aiSummary.detail].filter(Boolean).join(' · ');
-      break;
-    case 'ticket':
-      title  = aiSummary.name;
-      detail = [aiSummary.date, aiSummary.qty ? `×${aiSummary.qty}張` : '', aiSummary.ref ? `訂單 ${aiSummary.ref}` : ''].filter(Boolean).join(' · ');
-      break;
-    case 'restaurant':
-      title  = aiSummary.name;
-      detail = [aiSummary.date, aiSummary.pax ? `${aiSummary.pax}人` : ''].filter(Boolean).join(' · ');
-      break;
-    case 'insurance':
-      title  = aiSummary.company;
-      detail = [aiSummary.period, aiSummary.ref ? `保單 ${aiSummary.ref}` : ''].filter(Boolean).join(' · ');
-      break;
-    default:
-      title  = aiSummary.name;
-      detail = [aiSummary.date, aiSummary.detail].filter(Boolean).join(' · ');
-  }
-  return `<div class="email-card" data-msgid="${esc(msg.id)}">
-    <div class="email-card-head"><span class="email-type-tag">${icon} ${esc(label)}</span><span class="email-date">${esc(mailDate)}</span></div>
-    <div class="email-title">${esc(title || subject)}</div>
-    ${detail ? `<div class="email-detail">${esc(detail)}</div>` : ''}
-    <div class="email-from">${esc(fromName)}</div>
-  </div>`;
-}
-
-function ordersDisconnectedHTML() {
-  return `<div class="orders-state">連結 Gmail 可自動顯示此行程的相關訂單信件<br>
-    <button class="orders-connect-btn" onclick="toggleGmail()">連結 Gmail</button></div>`;
-}
-
-function aiKeyBannerHTML() {
-  return `<div class="ai-key-banner">
-    🤖 輸入 OpenAI API Key 啟用 AI 摘要
-    <input class="ai-key-input" id="aiKeyInput" type="password" placeholder="sk-..." />
-    <button class="ai-key-save" onclick="saveAIKey()">儲存</button>
-  </div>`;
-}
-
-function saveAIKey() {
-  const val = document.getElementById('aiKeyInput')?.value?.trim();
-  if (!val) return;
-  localStorage.setItem('openai_api_key', val);
-  const banner = document.querySelector('.ai-key-banner');
-  if (banner) banner.remove();
-  if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
-}
-
+// ── Settings ─────────────────────────────────────────────
 function openSettings() {
   document.getElementById('settingsOverlay').style.display = 'flex';
-  const existing = getOpenAIKey();
-  const keyInput = document.getElementById('settingsKeyInput');
-  keyInput.value = '';
-  keyInput.placeholder = existing ? '（已設定，可重新輸入覆蓋）' : 'sk-...';
-  const keyStatus = document.getElementById('settingsKeyStatus');
-  keyStatus.textContent = existing ? '✅ 已設定 AI Key' : '⚠️ 尚未設定，信件摘要將不顯示';
-  keyStatus.style.color = existing ? '#16a34a' : '#f59e0b';
-  const gasExisting = getGasUrl();
-  const gasInput = document.getElementById('settingsGasInput');
-  gasInput.value = gasExisting || '';
-  gasInput.placeholder = gasExisting ? '（已設定，可重新輸入覆蓋）' : 'https://script.google.com/macros/s/...';
-  const gasStatus = document.getElementById('settingsGasStatus');
-  gasStatus.textContent = gasExisting ? '✅ 已設定 Apps Script URL' : '⚠️ 尚未設定，Trip Notes 不可用';
-  gasStatus.style.color = gasExisting ? '#16a34a' : '#f59e0b';
   const otExisting = getOwnerToken();
   const otInput = document.getElementById('settingsOwnerTokenInput');
   otInput.value = otExisting || '';
@@ -1191,132 +696,16 @@ function closeSettings() {
 }
 
 function saveSettingsAll() {
-  const keyVal = document.getElementById('settingsKeyInput')?.value?.trim();
-  if (keyVal) {
-    localStorage.setItem('openai_api_key', keyVal);
-    document.getElementById('settingsKeyStatus').textContent = '✅ 已儲存';
-    document.getElementById('settingsKeyStatus').style.color = '#16a34a';
-  }
-  const gasVal = document.getElementById('settingsGasInput')?.value?.trim();
-  if (gasVal) {
-    saveGasUrl(gasVal);
-    document.getElementById('settingsGasStatus').textContent = '✅ 已儲存';
-    document.getElementById('settingsGasStatus').style.color = '#16a34a';
-  }
   const otInput = document.getElementById('settingsOwnerTokenInput');
-  if (otInput) {
-    const otVal = otInput.value.trim();
-    if (otVal) {
-      saveOwnerToken(otVal);
-      document.getElementById('settingsOwnerTokenStatus').textContent = '✅ 已儲存：' + otVal;
-      document.getElementById('settingsOwnerTokenStatus').style.color = '#16a34a';
-    } else if (otInput.value === '') {
-      localStorage.removeItem('owner_token');
-    }
+  const otVal = otInput.value.trim();
+  if (otVal) {
+    saveOwnerToken(otVal);
+    document.getElementById('settingsOwnerTokenStatus').textContent = '✅ 已儲存：' + otVal;
+    document.getElementById('settingsOwnerTokenStatus').style.color = '#16a34a';
+  } else {
+    localStorage.removeItem('owner_token');
   }
-  setTimeout(() => {
-    closeSettings();
-    const banner = document.querySelector('.ai-key-banner');
-    if (banner) banner.remove();
-    if (currentTripIdx !== null) loadTripOrders(currentTripIdx);
-  }, 800);
-}
-
-function saveTripEmailCache(tripName, details) {
-  const data = details.map(msg => ({
-    id:      msg.id,
-    subject: getHeader(msg, 'Subject') || '',
-    from:    getHeader(msg, 'From') || '',
-    date:    getHeader(msg, 'Date') || ''
-  }));
-  localStorage.setItem(`trip_emails_${tripName}`, JSON.stringify(data));
-}
-
-function renderCachedEmails(tripName, el) {
-  const raw = localStorage.getItem(`trip_emails_${tripName}`);
-  if (!raw) return false;
-  let emails;
-  try { emails = JSON.parse(raw); } catch(e) { return false; }
-  if (!emails.length) return false;
-  el.innerHTML = emails.map(e => {
-    const c = localStorage.getItem(`email_ai2_${e.id}`) || localStorage.getItem(`email_ai_${e.id}`);
-    const aiSummary = c ? (() => { try { return JSON.parse(c); } catch(_) { return null; } })() : null;
-    const miniMsg = { id: e.id, payload: { headers: [
-      { name: 'Subject', value: e.subject },
-      { name: 'From',    value: e.from },
-      { name: 'Date',    value: e.date }
-    ]}};
-    return emailCardHTML(miniMsg, aiSummary, false);
-  }).join('');
-  return true;
-}
-
-async function loadTripOrders(idx) {
-  const t  = trips[idx];
-  const el = document.getElementById('trip-orders');
-  if (!el) return;
-
-  // 無 Gmail token：嘗試從快取顯示，否則顯示連結提示
-  if (!gToken) {
-    const hasCache = renderCachedEmails(t.name, el);
-    if (!hasCache) el.innerHTML = ordersDisconnectedHTML();
-    return;
-  }
-
-  el.innerHTML = '<div class="orders-state">載入信件中⋯</div>';
-  try {
-    const labelId = await getLabelId(t.name);
-    if (!labelId) {
-      localStorage.removeItem(`trip_emails_${t.name}`);
-      const yymm = t.name.match(/^(\d{4})/)?.[1] || '';
-      el.innerHTML = `<div class="orders-state" style="text-align:left;padding:14px">
-        <b>找不到對應標籤</b><br>
-        <small style="color:#64748b;font-size:11px;line-height:1.8;display:block;margin-top:6px">
-          找 YYMM：<b>${esc(yymm)}</b>
-        </small></div>`;
-      return;
-    }
-    const data = await gmailGet(`/messages?labelIds=${labelId}&maxResults=20`);
-    if (!data.messages?.length) {
-      el.innerHTML = '<div class="orders-state">此標籤下目前無信件</div>';
-      return;
-    }
-    const msgs = data.messages.slice(0, 15);
-
-    // 抓完整信件（含 body）
-    const details = await Promise.all(
-      msgs.map(m => gmailGet(`/messages/${m.id}?format=full`))
-    );
-
-    // 儲存 metadata 快取供離線使用
-    saveTripEmailCache(t.name, details);
-
-    // 有快取的直接顯示，沒有的先顯示 loading 佔位
-    el.innerHTML = details.map(msg => {
-      const c = localStorage.getItem(`email_ai2_${msg.id}`) || localStorage.getItem(`email_ai_${msg.id}`);
-      const aiSummary = c ? (() => { try { return JSON.parse(c); } catch(e) { return null; } })() : null;
-      return emailCardHTML(msg, aiSummary, !aiSummary);
-    }).join('');
-
-    // 沒有 AI Key 時顯示設定 banner
-    if (!getOpenAIKey()) {
-      el.insertAdjacentHTML('afterend', aiKeyBannerHTML());
-    }
-
-    // 背景逐一呼叫 AI，產生後更新對應卡片
-    for (const msg of details) {
-      if (localStorage.getItem(`email_ai2_${msg.id}`)) continue;
-      const subject  = getHeader(msg, 'Subject') || '';
-      const from     = getHeader(msg, 'From') || '';
-      const fromName = from.replace(/<[^>]+>/, '').replace(/"/g, '').trim();
-      const body     = extractEmailBody(msg.payload);
-      const aiSummary = await getAISummary(msg.id, subject, fromName, body);
-      const cardEl = el.querySelector(`[data-msgid="${msg.id}"]`);
-      if (cardEl && aiSummary) cardEl.outerHTML = emailCardHTML(msg, aiSummary, false);
-    }
-  } catch(e) {
-    el.innerHTML = `<div class="orders-state" style="color:#ef4444">載入失敗：${esc(e.message)}</div>`;
-  }
+  setTimeout(closeSettings, 800);
 }
 
 // ── Sheets ───────────────────────────────────────────────
@@ -1521,14 +910,10 @@ async function loadTWCal(year) {
 
 async function openCalendar() {
   currentTripIdx = null;
-  stopPolling();
-  document.querySelector('.fab')?.remove();
   document.getElementById('menuBtn').style.display = 'none';
   document.getElementById('backBtn').style.display = '';
   document.getElementById('headerTitle').textContent = '月曆';
-  document.getElementById('notesBtn').style.display = 'none';
   document.getElementById('calBtn').style.display = '';
-  document.getElementById('moreBtnWrap').style.display = shareMode ? 'none' : '';
   closeDrawer();
   setContent('<div class="center-msg"><div class="spinner"></div>載入行事曆⋯</div>');
 
@@ -1659,14 +1044,10 @@ function renderCalMonth(year, month, today) {
 
 function goHome() {
   currentTripIdx = null;
-  stopPolling();
-  document.querySelector('.fab')?.remove();
   if (!shareMode) document.getElementById('menuBtn').style.display = '';
   document.getElementById('backBtn').style.display = 'none';
   document.getElementById('headerTitle').innerHTML = '<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站';
-  document.getElementById('notesBtn').style.display = 'none';
   document.getElementById('calBtn').style.display = '';
-  document.getElementById('moreBtnWrap').style.display = shareMode ? 'none' : '';
   closeDrawer();
 
   const thisYear = new Date().getFullYear();
@@ -1729,16 +1110,11 @@ function cardHTML(t) {
 // ── Detail ───────────────────────────────────────────────
 
 function openTrip(idx) {
-  stopPolling();
-  document.querySelector('.fab')?.remove();
-  currentNotes = [];
   const t = trips[idx];
   document.getElementById('menuBtn').style.display = 'none';
   document.getElementById('backBtn').style.display = '';
   document.getElementById('headerTitle').textContent = t.title;
   document.getElementById('calBtn').style.display = 'none';
-  document.getElementById('moreBtnWrap').style.display = 'none';
-  document.getElementById('notesBtn').style.display = ((shareMode || getOwnerToken()) && getGasUrl()) ? 'flex' : 'none';
   closeDrawer();
 
   const flag = getFlag(t.title);
@@ -1757,16 +1133,8 @@ function openTrip(idx) {
   html += '</div>';
   if (t.expenses.length) html += expenseHTML(t);
 
-  if (!shareMode) {
-    html += `<div class="orders-section">
-      <div class="orders-header">📧 相關訂單信件</div>
-      <div id="trip-orders"></div>
-    </div>`;
-  }
-
   currentTripIdx = idx;
   setContent(html);
-  if (!shareMode) loadTripOrders(idx);
   loadTripWeather(t);
 }
 
@@ -2253,8 +1621,6 @@ async function openWorldMap() {
   document.getElementById('headerTitle').innerHTML =
     '<img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 我的世界足跡';
   document.getElementById('calBtn').style.display = 'none';
-  document.getElementById('moreBtnWrap').style.display = 'none';
-  document.getElementById('notesBtn').style.display = 'none';
 
   setContent('<div class="center-msg"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="120" height="120" style="display:block;margin:0 auto"><circle stroke-width="2" stroke="#134074" fill="none" r="0" cy="50" cx="50"><animate begin="0s" calcMode="spline" keySplines="0 0.2 0.8 1" keyTimes="0;1" values="0;40" dur="1s" repeatCount="indefinite" attributeName="r"/><animate begin="0s" calcMode="spline" keySplines="0.2 0 0.8 1" keyTimes="0;1" values="1;0" dur="1s" repeatCount="indefinite" attributeName="opacity"/></circle><circle stroke-width="2" stroke="#bdc2e8" fill="none" r="0" cy="50" cx="50"><animate begin="-0.5s" calcMode="spline" keySplines="0 0.2 0.8 1" keyTimes="0;1" values="0;40" dur="1s" repeatCount="indefinite" attributeName="r"/><animate begin="-0.5s" calcMode="spline" keySplines="0.2 0 0.8 1" keyTimes="0;1" values="1;0" dur="1s" repeatCount="indefinite" attributeName="opacity"/></circle></svg></div>');
 
@@ -2276,7 +1642,6 @@ function renderFootprintDash(unmapped) {
   const stats = fpBuildStats();
   const totalCountries = 195;
   const pct = stats.countries ? ((stats.countries / totalCountries) * 100).toFixed(1) : 0;
-  const hasAcceptedA = (JSON.parse(localStorage.getItem('fp_trips') || '[]')).some(t => t.source === 'sheet_a');
 
   let unmappedHtml = '';
   if (unmapped.length) {
@@ -2307,7 +1672,7 @@ function renderFootprintDash(unmapped) {
   const html = `<div class="fp-page">
     <div class="fp-hero">
       <div class="fp-hero-title">🌏 我的世界足跡</div>
-      <div class="fp-hero-sub">${hasAcceptedA ? 'Sheet B + 行程規劃（已採納）合併統計' : '根據「過去出國紀錄」統計'}</div>
+      <div class="fp-hero-sub">根據「過去出國紀錄」統計</div>
     </div>
 
     <div class="fp-stats-grid">
@@ -2336,8 +1701,6 @@ function renderFootprintDash(unmapped) {
     <div class="fp-map-wrap"><div id="fp-map-container"></div></div>
 
     ${unmappedHtml}
-
-    ${fpBuildInferSection()}
 
     <div class="fp-section-label">造訪國家（依次數）</div>
     ${countriesHtml}
@@ -2385,7 +1748,6 @@ const ISO2_BY_NUM = {
 };
 
 const FP_COLOR_SCALE = ['#c8cfd6','#bfdbfe','#7ec8f0','#3b82f6','#1d4ed8','#134074'];
-const FP_GAS_URL = 'https://script.google.com/macros/s/AKfycbwTW5LOF3uVWW74X6MtMvgmPdpz8xQGi7krG5zyelPsjX-I2fDdN3un3DbQgLw6LV-q/exec';
 
 function fpCountColor(n) {
   if (!n) return FP_COLOR_SCALE[0];
@@ -2581,243 +1943,6 @@ async function fpRenderMap(containerId) {
     if (el3) el3.innerHTML = `<div style="text-align:center;padding:20px;color:#dc2626;font-size:13px">地圖載入失敗：${esc(e.message)}</div>`;
   }
 }
-
-// ── Phase 3: Sheet A LLM Inference ──────────────────────────────────
-
-function fpDateStr(d) {
-  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-}
-function fpToIsoDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function fpGetSheetATrips() {
-  return trips
-    .filter(t => t.status === 'done')
-    .map(t => ({
-      name: t.name, title: t.title, year: t.year,
-      startDate: fpToIsoDate(t.start), endDate: fpToIsoDate(t.end),
-      tripKeyBase: `${fpDateStr(t.start)}_${fpDateStr(t.end)}`,
-    }));
-}
-
-function fpGetBTripKeyBases() {
-  return new Set(
-    (JSON.parse(localStorage.getItem('fp_trips') || '[]'))
-      .filter(t => t.source === 'sheet_b')
-      .map(t => { const p = t.tripKey.split('_'); return `${p[0]}_${p[1]}`; })
-  );
-}
-
-function fpGetLLMCache() {
-  try { return JSON.parse(localStorage.getItem('footprint_llm_cache') || '{}'); } catch(_) { return {}; }
-}
-function fpSaveLLMCache(c) { localStorage.setItem('footprint_llm_cache', JSON.stringify(c)); }
-function fpClearInferErrors() {
-  const c = fpGetLLMCache();
-  Object.keys(c).forEach(k => { if (c[k]?.error) delete c[k]; });
-  fpSaveLLMCache(c);
-  renderFootprintDash([]);
-}
-
-function fpSaveKeyAndRetry() {
-  const input = document.getElementById('fp-key-input');
-  if (!input || !input.value.trim()) return;
-  localStorage.setItem('openai_key', input.value.trim());
-  fpClearInferErrors();
-  setTimeout(() => fpRunInference(), 100);
-}
-
-async function fpInferTrip(trip) {
-  const cache = fpGetLLMCache();
-  if (cache[trip.name] && !cache[trip.name].error) return cache[trip.name];
-  const apiKey = localStorage.getItem('openai_key');
-  if (!apiKey) throw new Error('nokey');
-  const prompt = `判斷這個旅行行程的目的地。\n行程：${trip.title}（${trip.startDate} ~ ${trip.endDate}）\n\n請回傳 JSON：{"countries":[{"code":"JP","name_zh":"日本"}],"cities":[{"name_zh":"東京","country_code":"JP"}],"confidence":0.95,"reasoning":"說明"}`;
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: prompt }], response_format: { type: 'json_object' }, max_tokens: 300 })
-  });
-  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
-  const json = await res.json();
-  const data = JSON.parse(json.choices[0].message.content);
-  cache[trip.name] = { ...data, tripMeta: trip, inferredAt: new Date().toISOString() };
-  fpSaveLLMCache(cache);
-  return cache[trip.name];
-}
-
-function fpSaveAccepted(tripName) {
-  const cache = fpGetLLMCache();
-  const entry = cache[tripName];
-  if (!entry?.tripMeta) return;
-  const trip = entry.tripMeta;
-  const countries = entry.countries || [];
-  const cities    = entry.cities    || [];
-  const duration  = trip.startDate && trip.endDate
-    ? Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 86400000) + 1 : 0;
-  const existingTrips  = JSON.parse(localStorage.getItem('fp_trips')  || '[]');
-  const existingVisits = JSON.parse(localStorage.getItem('fp_visits') || '[]');
-  const existingKeys   = new Set(existingTrips.map(t => t.tripKey));
-  countries.forEach(({ code, name_zh }) => {
-    const key = `${trip.tripKeyBase}_${code || name_zh}`;
-    if (existingKeys.has(key)) return;
-    existingTrips.push({ tripKey: key, source: 'sheet_a', startDate: trip.startDate,
-      endDate: trip.endDate, duration, countryCode: code, countryRaw: name_zh,
-      title: trip.title, note: '' });
-    existingKeys.add(key);
-    cities.filter(c => c.country_code === code).forEach(city => {
-      existingVisits.push({ tripKey: key, source: 'sheet_a', countryCode: code,
-        countryRaw: name_zh, cityNameRaw: city.name_zh,
-        startDate: trip.startDate, endDate: trip.endDate });
-    });
-  });
-  localStorage.setItem('fp_trips',  JSON.stringify(existingTrips));
-  localStorage.setItem('fp_visits', JSON.stringify(existingVisits));
-}
-
-function fpRemoveAccepted(tripName) {
-  const cache = fpGetLLMCache();
-  const base = cache[tripName]?.tripMeta?.tripKeyBase;
-  if (!base) return;
-  const ts = JSON.parse(localStorage.getItem('fp_trips')  || '[]').filter(t => !(t.source === 'sheet_a' && t.tripKey.startsWith(base)));
-  const vs = JSON.parse(localStorage.getItem('fp_visits') || '[]').filter(v => !(v.source === 'sheet_a' && v.tripKey.startsWith(base)));
-  localStorage.setItem('fp_trips', JSON.stringify(ts));
-  localStorage.setItem('fp_visits', JSON.stringify(vs));
-}
-
-function fpAcceptCard(tripName) {
-  const cache = fpGetLLMCache();
-  if (!cache[tripName]) return;
-  cache[tripName].accepted = true; cache[tripName].skipped = false;
-  fpSaveLLMCache(cache); fpSaveAccepted(tripName); renderFootprintDash([]);
-}
-function fpSkipCard(tripName) {
-  const cache = fpGetLLMCache();
-  cache[tripName] = cache[tripName] || {};
-  cache[tripName].skipped = true; cache[tripName].accepted = false;
-  fpSaveLLMCache(cache); fpRemoveAccepted(tripName); renderFootprintDash([]);
-}
-function fpResetCard(tripName) {
-  const cache = fpGetLLMCache();
-  const wasAccepted = cache[tripName]?.accepted;
-  delete cache[tripName]; fpSaveLLMCache(cache);
-  if (wasAccepted) fpRemoveAccepted(tripName);
-  renderFootprintDash([]);
-}
-
-function fpBatchAccept() {
-  const bKeys = fpGetBTripKeyBases();
-  const cache = fpGetLLMCache();
-  fpGetSheetATrips().filter(t => !bKeys.has(t.tripKeyBase)).forEach(t => {
-    const e = cache[t.name];
-    if (!e || e.accepted || e.skipped || e.error) return;
-    if ((e.confidence || 0) >= 0.8) {
-      cache[t.name].accepted = true; cache[t.name].skipped = false;
-      fpSaveLLMCache(cache); fpSaveAccepted(t.name);
-    }
-  });
-  renderFootprintDash([]);
-}
-
-async function fpRunInference() {
-  const infoEl = document.getElementById('fp-infer-info');
-  const btnEl  = document.getElementById('fp-infer-btn');
-  const bKeys   = fpGetBTripKeyBases();
-  const cache   = fpGetLLMCache();
-  const pending = fpGetSheetATrips()
-    .filter(t => !bKeys.has(t.tripKeyBase))
-    .filter(t => !cache[t.name] || cache[t.name].error);
-  if (!pending.length) { renderFootprintDash([]); return; }
-  if (btnEl) btnEl.disabled = true;
-  for (let i = 0; i < pending.length; i++) {
-    if (infoEl) infoEl.textContent = `推論中... ${i+1}/${pending.length}`;
-    try { await fpInferTrip(pending[i]); } catch(e) {
-      const c = fpGetLLMCache();
-      c[pending[i].name] = { error: e.message === 'nokey' ? '未設定 OpenAI Key' : e.message, tripMeta: pending[i] };
-      fpSaveLLMCache(c);
-    }
-  }
-  renderFootprintDash([]);
-}
-
-function fpBuildInferSection() {
-  const bKeys     = fpGetBTripKeyBases();
-  const cache     = fpGetLLMCache();
-  const sheetAAll = fpGetSheetATrips().filter(t => !bKeys.has(t.tripKeyBase));
-  if (!sheetAAll.length) return '';
-  const withResult = sheetAAll.filter(t => cache[t.name] && !cache[t.name].error);
-  const pending    = sheetAAll.filter(t => !cache[t.name] || cache[t.name].error);
-  const accepted   = withResult.filter(t => cache[t.name]?.accepted);
-  const skipped    = withResult.filter(t => cache[t.name]?.skipped);
-  const toReview   = withResult.filter(t => !cache[t.name]?.accepted && !cache[t.name]?.skipped);
-  const highConf   = toReview.filter(t => (cache[t.name]?.confidence || 0) >= 0.8);
-
-  let html = `<div class="fp-section-label">🗓️ 行程規劃紀錄（Sheet A）</div>`;
-  html += `<div class="fp-infer-stats">共 ${sheetAAll.length} 筆 · 已採納 ${accepted.length} · 已跳過 ${skipped.length} · 待確認 ${toReview.length}${pending.length ? ` · 未推論 ${pending.length}` : ''}</div>`;
-  const errored = pending.filter(t => cache[t.name]?.error);
-  if (errored.length) {
-    const msg = cache[errored[0].name]?.error || '未知錯誤';
-    const isNoKey = msg === '未設定 OpenAI Key' || msg === 'nokey';
-    if (isNoKey) {
-      html += `<div style="font-size:13px;margin:4px 0 8px;padding:10px 12px;background:#fef9c3;border-radius:8px;border:1px solid #fbbf24">
-        🔑 請輸入 OpenAI API Key（PWA 需單獨設定）<br>
-        <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
-          <input id="fp-key-input" type="password" placeholder="sk-..." value="${esc(localStorage.getItem('openai_key')||'')}"
-            style="flex:1;font-size:12px;padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;min-width:0">
-          <button onclick="fpSaveKeyAndRetry()" style="font-size:12px;padding:6px 12px;background:#134074;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap">儲存並推論</button>
-        </div>
-      </div>`;
-    } else {
-      html += `<div style="color:#dc2626;font-size:12px;margin:4px 0 6px;padding:6px 10px;background:#fef2f2;border-radius:6px;word-break:break-all">⚠️ 上次推論失敗：${esc(msg)}<br><button onclick="fpClearInferErrors()" style="margin-top:4px;font-size:11px;padding:2px 8px;border:1px solid #dc2626;background:none;color:#dc2626;border-radius:4px;cursor:pointer">清除錯誤重試</button></div>`;
-    }
-  }
-  if (pending.length) {
-    html += `<div style="margin:10px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="fp-import-btn" id="fp-infer-btn" onclick="fpRunInference()" style="margin:0;width:auto;padding:10px 18px;font-size:14px">⚡ 推論 ${pending.length} 筆</button>
-      <span id="fp-infer-info" style="color:#64748b;font-size:13px"></span>
-    </div>`;
-  }
-  if (highConf.length) {
-    html += `<div style="margin:6px 0"><button class="fp-import-btn secondary" onclick="fpBatchAccept()" style="margin:0;padding:9px 14px;font-size:13px;width:auto">✓ 批次採納高信心（${highConf.length} 筆 ≥80%）</button></div>`;
-  }
-  const renderCard = (t) => {
-    const e = cache[t.name]; if (!e) return '';
-    const conf = Math.round((e.confidence || 0) * 100);
-    const confColor = conf >= 80 ? '#15803d' : conf >= 50 ? '#b45309' : '#dc2626';
-    const ctryStr = (e.countries || []).map(c => `${fpCountryEmoji(c.code)} ${c.name_zh}`).join('、') || '（無法判斷）';
-    const cityStr = (e.cities    || []).map(c => c.name_zh).join('、');
-    const dateStr = `${(t.startDate||'').slice(0,7).replace('-','/')} ～ ${(t.endDate||'').slice(5).replace('-','/')}`;
-    let badge = '', actions = '';
-    if (e.accepted) {
-      badge   = `<span style="color:#15803d;font-size:12px;font-weight:700">✓ 已採納</span>`;
-      actions = `<button class="fp-card-btn reset" onclick="fpResetCard('${esc(t.name)}')">取消</button>`;
-    } else if (e.skipped) {
-      badge   = `<span style="color:#94a3b8;font-size:12px">✗ 跳過</span>`;
-      actions = `<button class="fp-card-btn reset" onclick="fpResetCard('${esc(t.name)}')">重置</button>`;
-    } else if (e.error) {
-      badge   = `<span style="color:#dc2626;font-size:12px">⚠️ 錯誤</span>`;
-      actions = `<button class="fp-card-btn reset" onclick="fpResetCard('${esc(t.name)}')">重試</button>`;
-    } else {
-      actions = `<button class="fp-card-btn accept" onclick="fpAcceptCard('${esc(t.name)}')">✓ 採納</button>
-        <button class="fp-card-btn skip" onclick="fpSkipCard('${esc(t.name)}')">✗ 跳過</button>`;
-    }
-    return `<div class="fp-infer-card${e.accepted ? ' accepted' : e.skipped ? ' skipped' : ''}">
-      <div class="fp-infer-card-header">
-        <div><div class="fp-infer-card-title">${esc(t.title)}</div><div class="fp-infer-card-date">${dateStr}</div></div>
-        ${badge}
-      </div>
-      <div class="fp-infer-card-result">
-        <span>${ctryStr}${cityStr ? ` · ${cityStr}` : ''}</span>
-        ${e.error ? `<span style="color:#dc2626;font-size:12px">${esc(e.error)}</span>` : `<span class="fp-conf-badge" style="color:${confColor}">信心 ${conf}%</span>`}
-      </div>
-      <div class="fp-infer-card-actions">${actions}</div>
-    </div>`;
-  };
-  toReview.forEach(t => { html += renderCard(t); });
-  return html;
-}
-
 // ── Init ─────────────────────────────────────────────────
 
 function showAccessDenied() {
@@ -2882,16 +2007,7 @@ async function init() {
     const meta = await api('?fields=sheets.properties');
     const allSheetProps = meta.sheets.map(s => s.properties);
     const sharesProps = allSheetProps.find(p => p.title === '_shares');
-    const configProps = allSheetProps.find(p => p.title === '_config');
     const sheetProps  = allSheetProps.filter(p => /^\d{4}_/.test(p.title));
-
-    if (configProps) {
-      const cfgData = await api(`/values/${encodeURIComponent('_config')}!A:B`);
-      for (const row of cfgData.values || []) {
-        const sn = (row[0] || '').trim(), gl = (row[1] || '').trim();
-        if (sn && gl) labelConfig[sn] = gl;
-      }
-    }
 
     let shareConfig = null;
     if (shareId && sharesProps) {
@@ -2905,9 +2021,6 @@ async function init() {
             displayName: (row[1] || '').trim(),
             sheetNames: (row[2] || '').split('|').map(s => s.trim()).filter(Boolean),
           };
-          // D 欄：GAS URL — share 模式下永遠以 _shares D 欄為準（確保 URL 更新能同步到所有裝置）
-          const rowGasUrl = (row[3] || '').trim();
-          if (rowGasUrl) saveGasUrl(rowGasUrl);
           break;
         }
       }
@@ -2939,10 +2052,6 @@ async function init() {
     }
 
     goHome();
-    if (shareMode) {
-      document.getElementById('moreBtn').closest('div').style.display = 'none';
-    }
-    if (!shareMode) tryInitGmail();
   } catch(e) {
     document.getElementById('content').innerHTML = `
       <div class="center-msg">
@@ -2953,18 +2062,7 @@ async function init() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// TRIP NOTES SYSTEM
-// ═══════════════════════════════════════════════════════════════════
-
-// ── State ──────────────────────────────────────────────────────────
-let currentNotes = [];
-let notesFilter  = 'all';
-let notesPolling = null;
-let pendingImages = [];
-let editingNoteId = null;
-const noteImagesCache = {};  // noteId_imageId → { imageUrl, thumbnailUrl }
-
+// ── Image / Access helpers (shared) ─────────────────────────────────
 function driveImgUrl(url, width) {
   if (!url) return '';
   const m = url.match(/[?&]id=([A-Za-z0-9_-]+)/);
@@ -2972,572 +2070,8 @@ function driveImgUrl(url, width) {
   return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w${width}`;
 }
 
-function populateImagesCache(notes) {
-  for (const note of notes) {
-    for (const img of (note.images || [])) {
-      noteImagesCache[note.noteId + '_' + img.imageId] = { imageUrl: img.imageUrl, thumbnailUrl: img.thumbnailUrl };
-    }
-  }
-}
-
-// ── GAS URL ────────────────────────────────────────────────────────
-function getGasUrl() { return (localStorage.getItem('gas_url') || '').trim(); }
-function saveGasUrl(url) { localStorage.setItem('gas_url', url.trim()); }
 function getOwnerToken() { return (localStorage.getItem('owner_token') || '').trim(); }
 function saveOwnerToken(t) { localStorage.setItem('owner_token', t.trim()); }
-
-// ── Device ID & Identity ──────────────────────────────────────────
-function getDeviceId() {
-  let id = localStorage.getItem('tripPlannerDeviceId');
-  if (!id) { id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('tripPlannerDeviceId', id); }
-  return id;
-}
-function currentShareToken() { return new URLSearchParams(location.search).get('share') || getOwnerToken() || ''; }
-function getIdentity(token) {
-  try { return JSON.parse(localStorage.getItem('tripIdentity_' + token)) || null; } catch (_) { return null; }
-}
-function saveIdentity(token, identity) { localStorage.setItem('tripIdentity_' + token, JSON.stringify(identity)); }
-function currentIdentity() {
-  const tok = currentShareToken();
-  if (!tok) return { nickname: 'Owner', deviceId: getDeviceId(), isOwner: true, fromToken: '' };
-  return getIdentity(tok);
-}
-
-// ── GAS API ────────────────────────────────────────────────────────
-async function gasCall(method, params) {
-  const url = getGasUrl();
-  if (!url) throw new Error('請先在設定中填入 Apps Script URL');
-  let res;
-  if (method === 'GET') {
-    res = await fetch(url + '?' + new URLSearchParams(params).toString());
-  } else {
-    res = await fetch(url, { method: 'POST', body: JSON.stringify(params) });
-  }
-  const data = await res.json();
-  if (!data.success) throw new Error(data.error?.message || '伺服器錯誤');
-  return data.data;
-}
-async function fetchNotes(tripId) {
-  const tok = currentShareToken();
-  if (!tok) return { notes: [] };
-  return gasCall('GET', { action: 'getNotes', tripId, token: tok });
-}
-async function apiGetShareInfo(token) { return gasCall('GET', { action: 'getShareInfo', token }); }
-async function apiCreateNote(tripId, note) {
-  return gasCall('POST', { action: 'createNote', token: currentShareToken(), tripId, note });
-}
-async function apiUpdateNote(noteId, updates, updatedBy) {
-  return gasCall('POST', { action: 'updateNote', token: currentShareToken(), noteId, updates, updatedBy });
-}
-async function apiDeleteNote(noteId) {
-  return gasCall('POST', { action: 'deleteNote', token: currentShareToken(), noteId, requestDevice: getDeviceId() });
-}
-async function apiUploadImage(tripId, noteId, file, uploadedBy) {
-  const [orig, thumb] = await Promise.all([compressImage(file, 1920, 0.85), compressImage(file, 200, 0.80)]);
-  return gasCall('POST', { action: 'uploadImage', token: currentShareToken(), tripId, noteId, filename: file.name, originalBase64: orig, thumbnailBase64: thumb, uploadedBy });
-}
-async function apiDeleteImage(imageId) {
-  return gasCall('POST', { action: 'deleteImage', token: currentShareToken(), imageId });
-}
-
-// ── Image compression ──────────────────────────────────────────────
-function compressImage(file, maxDim, quality) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const blobUrl = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(blobUrl);
-      const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
-      const canvas = document.createElement('canvas');
-      canvas.width  = Math.round(img.width  * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.onerror = reject;
-    img.src = blobUrl;
-  });
-}
-
-// ── Identity picker ────────────────────────────────────────────────
-async function ensureIdentity() {
-  const tok = currentShareToken();
-  if (!tok) return true;
-  if (getIdentity(tok)) return true;
-  try {
-    const info = await apiGetShareInfo(tok);
-    return new Promise(resolve => showIdentityPicker(info, tok, resolve));
-  } catch (e) { alert('無法載入分享資訊：' + e.message); return false; }
-}
-
-function showIdentityPicker(shareInfo, token, onDone) {
-  const options = shareInfo.nicknameOptions || [];
-  let selected = options[0] || '__custom';
-  let customVal = '';
-
-  const el = document.createElement('div');
-  el.className = 'fullscreen-overlay';
-  el.style.zIndex = 200;
-
-  function render() {
-    el.innerHTML = `
-      <div class="overlay-header"><div class="overlay-title">您是？</div></div>
-      <div class="overlay-body">
-        <div style="font-size:14px;color:#64748b;margin-bottom:16px">請選擇身份，之後寫筆記會用這個名稱</div>
-        ${options.map(n => `
-          <div class="identity-option${selected===n?' selected':''}" data-nick="${esc(n)}">
-            <div class="identity-radio${selected===n?' checked':''}"></div>
-            <div class="identity-name">${esc(n)}</div>
-          </div>`).join('')}
-        <div class="identity-option${selected==='__custom'?' selected':''}" data-nick="__custom">
-          <div class="identity-radio${selected==='__custom'?' checked':''}"></div>
-          <div style="flex:1">
-            <div class="identity-name">其他</div>
-            <input id="customNickInput" type="text" placeholder="輸入名稱"
-              style="margin-top:4px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;width:100%;box-sizing:border-box"
-              value="${esc(customVal)}">
-          </div>
-        </div>
-        <button id="confirmIdentityBtn" style="width:100%;padding:13px;background:#134074;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px">確認進入</button>
-      </div>`;
-
-    el.querySelectorAll('.identity-option').forEach(div => {
-      div.onclick = () => {
-        selected = div.dataset.nick;
-        render();
-        if (selected === '__custom') setTimeout(() => el.querySelector('#customNickInput')?.focus(), 50);
-      };
-    });
-    const ci = el.querySelector('#customNickInput');
-    if (ci) { ci.value = customVal; ci.oninput = e => { customVal = e.target.value; }; }
-    el.querySelector('#confirmIdentityBtn').onclick = () => {
-      const nick = selected === '__custom' ? customVal.trim() : selected;
-      if (!nick) { alert('請輸入名稱'); return; }
-      saveIdentity(token, { nickname: nick, deviceId: getDeviceId(), fromToken: token, isOwner: shareInfo.isOwner, selectedAt: new Date().toISOString() });
-      el.remove();
-      if (onDone) onDone(true);
-    };
-  }
-  render();
-  document.body.appendChild(el);
-}
-
-// ── Notes icon helpers ─────────────────────────────────────────────
-function _icoNote(sz=16){return `<svg xmlns="http://www.w3.org/2000/svg" height="${sz}px" viewBox="0 -960 960 960" width="${sz}px" fill="currentColor" style="vertical-align:middle"><path d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54H360q-66 0-113 47t-47 113v382q-16-9-27.5-24T158-276L81-710Zm719 390H640v160l160-160Z"/></svg>`;}
-function _icoExpense(sz=16){return `<svg xmlns="http://www.w3.org/2000/svg" height="${sz}px" viewBox="0 -960 960 960" width="${sz}px" fill="currentColor" style="vertical-align:middle"><path d="M120-160q-33 0-56.5-23.5T40-240v-440h80v440h680v80H120Zm160-160q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80q0-33-23.5-56.5T280-480v80h80Zm400 0h80v-80q-33 0-56.5 23.5T760-400Zm-200-40q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM280-640q33 0 56.5-23.5T360-720h-80v80Zm560 0v-80h-80q0 33 23.5 56.5T840-640Z"/></svg>`;}
-function _icoDate(sz=13){return `<svg xmlns="http://www.w3.org/2000/svg" height="${sz}px" viewBox="0 -960 960 960" width="${sz}px" fill="currentColor" style="vertical-align:middle"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Z"/></svg>`;}
-
-// ── Notes page ─────────────────────────────────────────────────────
-async function openNotes() {
-  const ok = await ensureIdentity();
-  if (!ok) return;
-  const t = trips[currentTripIdx];
-  if (!t) return;
-
-  document.getElementById('calBtn').style.display = 'none';
-  document.getElementById('moreBtnWrap').style.display = 'none';
-  document.getElementById('notesBtn').style.display = 'none';
-  document.getElementById('headerTitle').textContent = 'Notes';
-  setContent('<div class="center-msg"><div class="spinner"></div>載入筆記⋯</div>');
-  stopPolling();
-
-  try {
-    const { notes } = await fetchNotes(t.name);
-    populateImagesCache(notes);
-    currentNotes = notes;
-    notesFilter = 'all';
-    renderNotesPage(t);
-    startPolling(t.name);
-  } catch (e) {
-    setContent(`<div class="center-msg"><div class="err-icon">⚠️</div><div class="err-msg">${esc(e.message)}</div></div>`);
-  }
-}
-
-function setNotesFilter(f) { notesFilter = f; renderNotesPage(trips[currentTripIdx]); }
-
-function renderNotesPage(t) {
-  const identity = currentIdentity();
-  const filtered = notesFilter === 'all' ? currentNotes : currentNotes.filter(n => n.category === notesFilter);
-
-  let notesHtml = '';
-  if (filtered.length === 0) {
-    notesHtml = `<div class="center-msg" style="padding-top:60px"><div style="margin-bottom:12px;color:#cbd5e1">${_icoNote(32)}</div><div style="color:#94a3b8;font-size:15px">還沒有筆記</div></div>`;
-  } else {
-    const groups = {};
-    for (const n of filtered) { const k = n.date || '__nodate'; (groups[k] = groups[k]||[]).push(n); }
-    const keys = Object.keys(groups).sort((a, b) => a==='__nodate'?1:b==='__nodate'?-1:a<b?-1:1);
-    for (const key of keys) {
-      const labelText = key === '__nodate' ? '無日期關聯' : formatNoteDateLabel(key, t);
-      notesHtml += `<div class="notes-date-group"><div class="notes-date-label">${_icoDate(13)} ${esc(labelText)}</div></div>`;
-      const grp = [...groups[key]].sort((a, b) => String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-      for (const note of grp) notesHtml += renderNoteCard(note, identity);
-    }
-  }
-
-  // 篩選列只在第一次渲染，polling 更新時只換筆記列表，避免標籤跳動
-  if (!document.querySelector('.notes-filter')) {
-    setContent(`<div class="notes-filter">
-      <button class="notes-filter-btn${notesFilter==='all'?' active':''}" onclick="setNotesFilter('all')">全部</button>
-      <button class="notes-filter-btn${notesFilter==='note'?' active':''}" onclick="setNotesFilter('note')">一般</button>
-      <button class="notes-filter-btn${notesFilter==='expense'?' active':''}" onclick="setNotesFilter('expense')">開銷</button>
-    </div><div id="notesList"></div>`);
-  } else {
-    document.querySelectorAll('.notes-filter-btn').forEach((btn, i) => {
-      btn.classList.toggle('active', notesFilter === ['all','note','expense'][i]);
-    });
-  }
-  const listEl = document.getElementById('notesList');
-  if (listEl) listEl.innerHTML = notesHtml;
-
-  let fab = document.querySelector('.fab');
-  if (!fab) {
-    fab = document.createElement('button');
-    fab.className = 'fab'; fab.textContent = '+';
-    document.body.appendChild(fab);
-  }
-  fab.onclick = () => showNoteForm(t, null);
-}
-
-function formatNoteDateLabel(dateStr, t) {
-  const d = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? new Date(dateStr + 'T00:00:00') : new Date(dateStr);
-  if (isNaN(d)) return dateStr;
-  const dayNum = Math.round((d - new Date(t.start.getFullYear(), t.start.getMonth(), t.start.getDate())) / 86400000) + 1;
-  const days = ['日','一','二','三','四','五','六'];
-  return `Day ${dayNum} ｜ ${d.getMonth()+1}/${d.getDate()} 週${days[d.getDay()]}`;
-}
-
-function renderNoteCard(note, identity) {
-  const canDelete = identity?.isOwner || note.createdByDevice === getDeviceId();
-  const icon = note.category === 'expense' ? _icoExpense() : _icoNote();
-  const timeStr = noteTimeStr(note.createdAt);
-  const isEdited = note.updatedAt && note.updatedAt !== note.createdAt;
-  const syncDot = note._syncStatus === 'syncing' ? '<span class="note-sync-dot note-sync-syncing"></span>'
-    : note._syncStatus === 'failed' ? '<span class="note-sync-dot note-sync-failed"></span>' : '';
-
-  let imgGrid = '';
-  if (note.imageRefs && note.imageRefs.length > 0) {
-    const show = note.imageRefs.slice(0, 6); const more = note.imageRefs.length - 6;
-    imgGrid = '<div class="note-image-grid">';
-    show.forEach((imgId, i) => {
-      const key = note.noteId + '_' + imgId;
-      const thumbUrl = driveImgUrl((noteImagesCache[key]||{}).thumbnailUrl, 400);
-      if (i === 5 && more > 0) {
-        imgGrid += `<div class="note-image-more" onclick="showImgPreview('${esc(note.noteId)}',${i})">+${more+1}</div>`;
-      } else {
-        imgGrid += `<img class="note-image-thumb" src="${esc(thumbUrl)}" loading="lazy" onclick="showImgPreview('${esc(note.noteId)}',${i})">`;
-      }
-    });
-    imgGrid += '</div>';
-  }
-
-  let expRow = '';
-  if (note.category === 'expense' && note.expenseAmount !== null) {
-    expRow = `<div class="note-card-expense">${esc(note.expenseCurrency||'')} ${note.expenseAmount}${note.expensePayer ? '／' + esc(note.expensePayer) : ''}</div>`;
-  }
-
-  const metaJson = JSON.stringify({ canDelete }).replace(/"/g, '&quot;');
-  return `
-    <div class="note-card" id="nc_${esc(note.noteId)}">
-      <div class="note-card-top">
-        <div class="note-card-icon">${icon}</div>
-        <div class="note-card-meta">
-          <div class="note-card-author">${esc(note.createdBy)}${syncDot}</div>
-          <div class="note-card-time">${esc(timeStr)}${isEdited?' <span style="color:#cbd5e1">（已編輯）</span>':''}</div>
-        </div>
-        <button class="note-card-menu-btn" onclick="toggleNoteMenu('${esc(note.noteId)}','${metaJson}')">⋯</button>
-      </div>
-      ${note.text ? `<div class="note-card-text">${esc(note.text)}</div>` : ''}
-      ${imgGrid}
-      ${expRow}
-    </div>`;
-}
-
-function noteTimeStr(iso) {
-  if (!iso) return '';
-  const d = new Date(iso); const now = new Date();
-  if (d.toDateString() === now.toDateString()) return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-
-// ── Note menu ──────────────────────────────────────────────────────
-function toggleNoteMenu(noteId, metaJson) {
-  const existing = document.getElementById('noteMenu');
-  if (existing) { existing.remove(); return; }
-  const meta = JSON.parse(metaJson.replace(/&quot;/g, '"'));
-  const identity = currentIdentity();
-  const t = trips[currentTripIdx];
-  const menu = document.createElement('div');
-  menu.id = 'noteMenu';
-  menu.style.cssText = 'position:fixed;right:16px;top:50%;transform:translateY(-50%);background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:100;min-width:150px;overflow:hidden;';
-  menu.innerHTML = `
-    <div style="padding:14px 18px;font-size:15px;cursor:pointer;border-bottom:1px solid #f1f5f9" onclick="closeNoteMenu();showNoteForm(trips[currentTripIdx],'${esc(noteId)}')">✏️ 編輯</div>
-    ${meta.canDelete ? `<div style="padding:14px 18px;font-size:15px;color:#ef4444;cursor:pointer" onclick="closeNoteMenu();confirmDeleteNote('${esc(noteId)}')">🗑️ 刪除${identity?.isOwner?' (主人)':''}</div>` : ''}`;
-  setTimeout(() => document.addEventListener('click', closeNoteMenu, { once: true }), 0);
-  document.body.appendChild(menu);
-}
-function closeNoteMenu() { document.getElementById('noteMenu')?.remove(); }
-
-async function confirmDeleteNote(noteId) {
-  const identity = currentIdentity();
-  if (!confirm(identity?.isOwner ? '確定刪除這則筆記嗎？（主人模式可刪所有人）' : '確定刪除這則筆記嗎？')) return;
-  try {
-    await apiDeleteNote(noteId);
-    currentNotes = currentNotes.filter(n => n.noteId !== noteId);
-    renderNotesPage(trips[currentTripIdx]);
-  } catch (e) { alert('刪除失敗：' + e.message); }
-}
-
-// ── Note form ──────────────────────────────────────────────────────
-function showNoteForm(t, editNoteId) {
-  editingNoteId = editNoteId; pendingImages = [];
-  const note = editNoteId ? currentNotes.find(n => n.noteId === editNoteId) : null;
-  const identity = currentIdentity();
-  const toLocalDateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const dates = [];
-  const s0 = new Date(t.start); s0.setHours(0,0,0,0);
-  const e0 = new Date(t.end);   e0.setHours(0,0,0,0);
-  for (let d = new Date(s0); d <= e0; d.setDate(d.getDate()+1)) dates.push(new Date(d));
-  const today = new Date(); today.setHours(0,0,0,0);
-  const defaultDateStr = note?.date || toLocalDateStr(dates.find(d=>d.getTime()===today.getTime())||dates[0]||today);
-
-  let formCat = note?.category || 'note';
-  let formDateStr = defaultDateStr;
-  let formNoDate = !!note && !note.date;
-  let formText = note?.text || '';
-  let formAmount = note?.expenseAmount ?? '';
-  let formCurrency = note?.expenseCurrency || 'TWD';
-  let formPayer = note?.expensePayer || identity?.nickname || '';
-
-  const el = document.createElement('div');
-  el.id = 'noteFormOverlay';
-  el.className = 'fullscreen-overlay';
-
-  function render() {
-    const currencies = ['TWD','JPY','USD','EUR','VND','KRW','THB','SGD','AUD','HKD'];
-    el.innerHTML = `
-      <div class="overlay-header">
-        <button class="overlay-cancel" onclick="closeNoteForm()">取消</button>
-        <div class="overlay-title">${editNoteId ? '編輯筆記' : '新增筆記'}</div>
-        <button class="overlay-save" onclick="submitNoteForm()">儲存</button>
-      </div>
-      <div class="overlay-body">
-        <div class="form-section-label">分類</div>
-        <div class="form-cat-btns">
-          <button class="form-cat-btn${formCat==='note'?' active':''}" onclick="setFormCat('note')">一般筆記</button>
-          <button class="form-cat-btn${formCat==='expense'?' active':''}" onclick="setFormCat('expense')">開銷紀錄</button>
-        </div>
-        <div class="form-section-label">日期</div>
-        <div class="form-date-row">
-          <select id="formDateSel" class="form-select" ${formNoDate?'disabled':''}>
-            ${dates.map((d,i)=>{
-              const s=toLocalDateStr(d);
-              return `<option value="${s}"${s===formDateStr?' selected':''}>Day ${i+1} (${d.getMonth()+1}/${d.getDate()})</option>`;
-            }).join('')}
-          </select>
-          <label class="form-checkbox-label"><input type="checkbox" id="formNoDateChk" ${formNoDate?'checked':''}> 無日期</label>
-        </div>
-        <div class="form-section-label">內容</div>
-        <textarea id="formText" class="form-textarea" placeholder="輸入筆記內容...">${esc(formText)}</textarea>
-        <div class="form-section-label">圖片</div>
-        <label class="form-add-photo" for="imgFileInput">📷 加入圖片（最多 9 張）</label>
-        <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none">
-        <div class="form-photo-preview" id="formPhotoPrev"></div>
-        ${formCat==='expense'?`
-        <div class="form-section-label">開銷資訊</div>
-        <div class="form-row" style="margin-bottom:8px">
-          <input id="formAmt" class="form-input" type="number" placeholder="金額" value="${formAmount}" style="max-width:130px">
-          <select id="formCur" class="form-select" style="max-width:110px">${currencies.map(c=>`<option${c===formCurrency?' selected':''}>${c}</option>`).join('')}</select>
-        </div>
-        <input id="formPayer" class="form-input" placeholder="付款人" value="${esc(formPayer)}">` : ''}
-        <div class="form-identity-row">
-          <span class="form-identity-label">目前身份</span>
-          <span class="form-identity-name" onclick="changeFormIdentity()">${esc(identity?.nickname || '未設定')}</span>
-        </div>
-      </div>`;
-    const ta = el.querySelector('#formText');
-    if (ta) ta.addEventListener('input', e => { formText = e.target.value; });
-    el.querySelector('#formNoDateChk').onchange = e => { formNoDate = e.target.checked; el.querySelector('#formDateSel').disabled = formNoDate; };
-    el.querySelector('#imgFileInput').onchange = handleImageSelect;
-    renderFormPhotos();
-  }
-
-  window.setFormCat = cat => {
-    const amt = el.querySelector('#formAmt'); if (amt) formAmount = amt.value;
-    const cur = el.querySelector('#formCur'); if (cur) formCurrency = cur.value;
-    const pay = el.querySelector('#formPayer'); if (pay) formPayer = pay.value;
-    const ta  = el.querySelector('#formText');  if (ta)  formText  = ta.value;
-    const ds  = el.querySelector('#formDateSel'); if (ds) formDateStr = ds.value;
-    formCat = cat; render();
-  };
-  window.handleImageSelect = async evt => {
-    const files = Array.from(evt.target.files);
-    const max = 9 - pendingImages.length;
-    for (const f of files.slice(0, max)) {
-      if (f.size > 20*1024*1024) { alert(f.name + ' 超過 20MB，已略過'); continue; }
-      pendingImages.push({ file: f, previewUrl: URL.createObjectURL(f) });
-    }
-    renderFormPhotos(); evt.target.value = '';
-  };
-  window.removeFormPhoto = i => { URL.revokeObjectURL(pendingImages[i]?.previewUrl); pendingImages.splice(i,1); renderFormPhotos(); };
-  window.changeFormIdentity = () => { const tok = currentShareToken(); if (tok) { localStorage.removeItem('tripIdentity_' + tok); closeNoteForm(); openNotes(); } };
-
-  function renderFormPhotos() {
-    const prev = el.querySelector('#formPhotoPrev');
-    if (!prev) return;
-    prev.innerHTML = pendingImages.map((img, i) => `
-      <div class="form-photo-thumb">
-        <img src="${img.previewUrl}">
-        <button class="form-photo-remove" onclick="removeFormPhoto(${i})">×</button>
-      </div>`).join('');
-  }
-
-  render();
-  document.body.appendChild(el);
-}
-
-function closeNoteForm() {
-  pendingImages.forEach(img => URL.revokeObjectURL(img.previewUrl));
-  pendingImages = [];
-  document.getElementById('noteFormOverlay')?.remove();
-}
-
-async function submitNoteForm() {
-  const el = document.getElementById('noteFormOverlay');
-  if (!el) return;
-  const text = el.querySelector('#formText')?.value?.trim() || '';
-  const noDate = el.querySelector('#formNoDateChk')?.checked;
-  const dateVal = noDate ? null : (el.querySelector('#formDateSel')?.value || null);
-  const catBtn = el.querySelector('.form-cat-btn.active');
-  const cat = catBtn && catBtn.textContent.includes('開銷') ? 'expense' : 'note';
-  const amount = el.querySelector('#formAmt')?.value?.trim();
-  const currency = el.querySelector('#formCur')?.value || 'TWD';
-  const payer = el.querySelector('#formPayer')?.value?.trim() || '';
-
-  if (!text && pendingImages.length === 0) { alert('請輸入內容或加入圖片'); return; }
-  if (cat === 'expense' && !amount) { alert('開銷紀錄需填入金額'); return; }
-
-  const identity = currentIdentity();
-  const noteData = {
-    date: dateVal, category: cat, text,
-    imageRefs: [],
-    expenseAmount: cat === 'expense' ? parseFloat(amount) : null,
-    expenseCurrency: cat === 'expense' ? currency : null,
-    expensePayer: cat === 'expense' ? payer : null,
-    createdBy: identity?.nickname || '匿名',
-    createdByDevice: getDeviceId()
-  };
-
-  const imgs = [...pendingImages];
-  closeNoteForm();
-
-  if (editingNoteId) {
-    await doUpdateNote(editingNoteId, noteData, identity?.nickname);
-  } else {
-    await doCreateNote(trips[currentTripIdx], noteData, imgs);
-  }
-}
-
-async function doCreateNote(t, noteData, imgs) {
-  const tempId = 'temp_' + Date.now();
-  currentNotes.unshift({ ...noteData, noteId: tempId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), _syncStatus: 'syncing' });
-  renderNotesPage(t);
-  try {
-    const { noteId } = await apiCreateNote(t.name, noteData);
-    if (imgs.length > 0) {
-      const imageRefs = [];
-      for (const img of imgs) {
-        try {
-          const res = await apiUploadImage(t.name, noteId, img.file, noteData.createdBy);
-          imageRefs.push(res.imageId);
-          noteImagesCache[noteId + '_' + res.imageId] = { imageUrl: res.imageUrl, thumbnailUrl: res.thumbnailUrl };
-          URL.revokeObjectURL(img.previewUrl);
-        } catch (_) {}
-      }
-      if (imageRefs.length > 0) await apiUpdateNote(noteId, { imageRefs }, noteData.createdBy);
-      const idx = currentNotes.findIndex(n => n.noteId === tempId);
-      if (idx >= 0) currentNotes[idx] = { ...currentNotes[idx], noteId, imageRefs, _syncStatus: 'synced' };
-    } else {
-      const idx = currentNotes.findIndex(n => n.noteId === tempId);
-      if (idx >= 0) currentNotes[idx] = { ...currentNotes[idx], noteId, _syncStatus: 'synced' };
-    }
-    renderNotesPage(t);
-  } catch (e) {
-    const idx = currentNotes.findIndex(n => n.noteId === tempId);
-    if (idx >= 0) currentNotes[idx]._syncStatus = 'failed';
-    renderNotesPage(t); alert('儲存失敗：' + e.message);
-  }
-}
-
-async function doUpdateNote(noteId, noteData, updatedBy) {
-  const t = trips[currentTripIdx];
-  const idx = currentNotes.findIndex(n => n.noteId === noteId);
-  const prev = idx >= 0 ? { ...currentNotes[idx] } : null;
-  if (idx >= 0) currentNotes[idx] = { ...currentNotes[idx], ...noteData, _syncStatus: 'syncing' };
-  renderNotesPage(t);
-  try {
-    await apiUpdateNote(noteId, noteData, updatedBy);
-    if (idx >= 0) currentNotes[idx]._syncStatus = 'synced';
-    renderNotesPage(t);
-  } catch (e) {
-    if (idx >= 0 && prev) currentNotes[idx] = prev;
-    renderNotesPage(t); alert('更新失敗：' + e.message);
-  }
-}
-
-// ── Image preview ──────────────────────────────────────────────────
-function showImgPreview(noteId, startIdx) {
-  const note = currentNotes.find(n => n.noteId === noteId);
-  if (!note?.imageRefs?.length) return;
-  let idx = startIdx;
-  const el = document.createElement('div');
-  el.className = 'img-preview-overlay';
-  function render() {
-    const imgId = note.imageRefs[idx];
-    const url = driveImgUrl((noteImagesCache[noteId + '_' + imgId] || {}).imageUrl, 1920);
-    el.innerHTML = `
-      <button class="img-preview-close" onclick="this.closest('.img-preview-overlay').remove()">×</button>
-      <img class="img-preview-img" src="${esc(url)}" alt="">
-      <div class="img-preview-counter">${idx+1} / ${note.imageRefs.length}</div>`;
-    const img = el.querySelector('img');
-    let sx = 0;
-    img.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
-    img.addEventListener('touchend', e => {
-      const dx = e.changedTouches[0].clientX - sx;
-      if (Math.abs(dx) > 40) { idx = dx < 0 ? Math.min(idx+1, note.imageRefs.length-1) : Math.max(idx-1, 0); render(); }
-    });
-  }
-  render();
-  document.body.appendChild(el);
-}
-
-// ── Polling ────────────────────────────────────────────────────────
-function startPolling(tripId) {
-  stopPolling();
-  window._notesPollingTripId = tripId;
-  notesPolling = setInterval(() => syncNotes(tripId), 30000);
-  document.addEventListener('visibilitychange', _onVisibilityChange);
-}
-function stopPolling() {
-  if (notesPolling) { clearInterval(notesPolling); notesPolling = null; }
-  document.removeEventListener('visibilitychange', _onVisibilityChange);
-  window._notesPollingTripId = null;
-}
-function _onVisibilityChange() {
-  const tripId = window._notesPollingTripId;
-  if (!tripId) return;
-  if (document.hidden) { clearInterval(notesPolling); notesPolling = null; }
-  else { notesPolling = setInterval(() => syncNotes(tripId), 30000); syncNotes(tripId); }
-}
-async function syncNotes(tripId) {
-  try {
-    const { notes } = await fetchNotes(tripId);
-    populateImagesCache(notes);
-    const localTemp = currentNotes.filter(n => n._syncStatus === 'syncing' || n._syncStatus === 'failed');
-    const localIds = new Set(localTemp.map(n => n.noteId));
-    currentNotes = [...notes.filter(n => !localIds.has(n.noteId)), ...localTemp];
-    if (trips[currentTripIdx]?.name === tripId) renderNotesPage(trips[currentTripIdx]);
-  } catch (_) {}
-}
 
 init();
 
