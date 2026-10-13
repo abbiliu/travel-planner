@@ -462,8 +462,51 @@
       text-decoration: none;
       margin-top: 4px;
       margin-right: 4px;
+      border: none;
+      font-family: inherit;
+      cursor: pointer;
     }
     .map-btn:active { background: #dbeafe; }
+
+    /* ── In-app Browser Overlay ── */
+    #webviewOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      z-index: 300;
+      background: #fff;
+      flex-direction: column;
+    }
+    #webviewOverlay.open { display: flex; }
+    .webview-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 10px;
+      padding-top: calc(10px + env(safe-area-inset-top));
+      border-bottom: 1px solid #e2e8f0;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .webview-close {
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: #134074; padding: 6px 8px; line-height: 1;
+    }
+    .webview-title {
+      flex: 1; min-width: 0;
+      font-size: 12px; color: #94a3b8;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .webview-external {
+      font-size: 13px; color: #2563eb; text-decoration: none;
+      padding: 6px 8px; white-space: nowrap;
+    }
+    .webview-body { flex: 1; position: relative; min-height: 0; }
+    .webview-body iframe {
+      width: 100%; height: 100%; border: none; display: none;
+    }
+    .webview-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: #94a3b8; font-size: 14px;
+    }
 
     /* ── Card Thumbnail ── */
     .trip-card-body { display: flex; align-items: center; gap: 12px; }
@@ -678,6 +721,19 @@
     </div>
   </div>
 
+  <!-- In-app Browser Overlay -->
+  <div id="webviewOverlay">
+    <div class="webview-bar">
+      <button type="button" class="webview-close" onclick="closeWebview()">✕</button>
+      <div id="webviewTitle" class="webview-title"></div>
+      <a id="webviewExternalLink" class="webview-external" href="#" target="_blank" rel="noopener">外部開啟 ↗</a>
+    </div>
+    <div class="webview-body">
+      <iframe id="webviewFrame"></iframe>
+      <div id="webviewLoading" class="webview-loading">載入中…</div>
+    </div>
+  </div>
+
   <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
   <div class="drawer" id="drawer">
     <div class="drawer-head"><img src="./flight.svg" class="flight-icon flight-icon-inv" alt=""> 旅行規劃站</div>
@@ -720,6 +776,38 @@ function openSettings() {
 
 function closeSettings() {
   document.getElementById('settingsOverlay').style.display = 'none';
+}
+
+// ── In-app Browser ──────────────────────────────────────
+function openWebview(url) {
+  const overlay = document.getElementById('webviewOverlay');
+  const frame = document.getElementById('webviewFrame');
+  const loading = document.getElementById('webviewLoading');
+  const title = document.getElementById('webviewTitle');
+  const extLink = document.getElementById('webviewExternalLink');
+
+  frame.style.display = 'none';
+  loading.style.display = 'flex';
+  extLink.href = url;
+  try { title.textContent = new URL(url).hostname; } catch (e) { title.textContent = url; }
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  frame.onload = () => {
+    frame.style.display = 'block';
+    loading.style.display = 'none';
+  };
+  frame.src = url;
+}
+
+function closeWebview() {
+  const overlay = document.getElementById('webviewOverlay');
+  const frame = document.getElementById('webviewFrame');
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+  frame.onload = null;
+  frame.src = 'about:blank';
 }
 
 function saveSettingsAll() {
@@ -774,9 +862,13 @@ function formatDateLabel(date) {
 }
 
 function extractMaps(text) {
-  const re = /https?:\/\/(?:www\.)?(?:maps\.google\.com|google\.com\/maps|goo\.gl\/maps|maps\.app\.goo\.gl)\S*/g;
-  const links = [...text.matchAll(re)].map(m => m[0]);
-  return { text: text.replace(re, '').trim(), links };
+  const mapsRe = /https?:\/\/(?:www\.)?(?:maps\.google\.com|google\.com\/maps|goo\.gl\/maps|maps\.app\.goo\.gl)\S*/g;
+  const links = [...text.matchAll(mapsRe)].map(m => m[0]);
+  let rest = text.replace(mapsRe, '');
+  const urlRe = /https?:\/\/\S+/g;
+  const refs = [...rest.matchAll(urlRe)].map(m => m[0]);
+  rest = rest.replace(urlRe, '').trim();
+  return { text: rest, links, refs };
 }
 
 function buildTrip(props, rows) {
@@ -1189,14 +1281,17 @@ function dayHTML(day, n) {
     day.acts.forEach(a => {
       if (!a.act && !a.detail) return;
       h += '<div class="act-row">';
-      const { text: actTxt, links: actLinks } = extractMaps(a.act);
-      const { text: detTxt, links: detLinks } = extractMaps(a.detail);
-      const { text: noteTxt, links: noteLinks } = extractMaps(a.note || '');
+      const { text: actTxt, links: actLinks, refs: actRefs } = extractMaps(a.act);
+      const { text: detTxt, links: detLinks, refs: detRefs } = extractMaps(a.detail);
+      const { text: noteTxt, links: noteLinks, refs: noteRefs } = extractMaps(a.note || '');
       if (actTxt)  h += `<div class="act-main">${esc(actTxt)}</div>`;
       if (detTxt)  h += `<div class="act-detail">${esc(detTxt)}</div>`;
       if (noteTxt) h += `<div class="act-note">💬 ${esc(noteTxt)}</div>`;
       [...actLinks, ...detLinks, ...noteLinks].forEach(url => {
         h += `<a class="map-btn" href="${esc(url)}" target="_blank">📍 地圖</a>`;
+      });
+      [...actRefs, ...detRefs, ...noteRefs].forEach(url => {
+        h += `<button type="button" class="map-btn" onclick="openWebview('${esc(url).replace(/'/g, '&#39;')}')">📍 參考</button>`;
       });
       h += '</div>';
     });
