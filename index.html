@@ -467,6 +467,10 @@
       cursor: pointer;
     }
     .map-btn:active { background: #dbeafe; }
+    .map-btn.ref-web { background: #eff6ff; color: #2563eb; }
+    .map-btn.ref-web:active { background: #dbeafe; }
+    .map-btn.ref-img { background: #ecfdf5; color: #059669; }
+    .map-btn.ref-img:active { background: #d1fae5; }
 
     /* ── In-app Browser Overlay ── */
     #webviewOverlay {
@@ -805,7 +809,7 @@ function openWebview(url) {
     loading.style.display = 'none';
   };
 
-  const isImage = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?.*)?(#.*)?$/i.test(url);
+  const isImage = isImageUrl(url);
   if (isImage) {
     frame.removeAttribute('src');
     frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes">
@@ -879,6 +883,10 @@ function formatDateLabel(date) {
   const mm = String(date.getMonth() + 1).padStart(2, '0');
   const dd = String(date.getDate()).padStart(2, '0');
   return `${mm}/${dd} 週${days[date.getDay()]}`;
+}
+
+function isImageUrl(url) {
+  return /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?.*)?(#.*)?$/i.test(url);
 }
 
 function extractMaps(text) {
@@ -1311,7 +1319,10 @@ function dayHTML(day, n) {
         h += `<a class="map-btn" href="${esc(url)}" target="_blank">📍 地圖</a>`;
       });
       [...actRefs, ...detRefs, ...noteRefs].forEach(url => {
-        h += `<button type="button" class="map-btn" onclick="openWebview('${esc(url).replace(/'/g, '&#39;')}')">📍 參考</button>`;
+        const img = isImageUrl(url);
+        const cls = img ? 'map-btn ref-img' : 'map-btn ref-web';
+        const label = img ? '🏞️ 圖片' : '🔗 網頁';
+        h += `<button type="button" class="${cls}" onclick="openWebview('${esc(url).replace(/'/g, '&#39;')}')">${label}</button>`;
       });
       h += '</div>';
     });
