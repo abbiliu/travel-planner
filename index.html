@@ -779,6 +779,9 @@ function closeSettings() {
 }
 
 // ── In-app Browser ──────────────────────────────────────
+const LOCKED_VIEWPORT = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+const ZOOMABLE_VIEWPORT = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+
 function openWebview(url) {
   const overlay = document.getElementById('webviewOverlay');
   const frame = document.getElementById('webviewFrame');
@@ -793,6 +796,9 @@ function openWebview(url) {
 
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+  // App 殼平常鎖 pinch-zoom（避免滑動時誤縮放UI），但 overlay 是全螢幕遮蓋、
+  // 不會碰到底下的 UI，開著的時候暫時放開，才能放大看參考內容/圖片
+  document.querySelector('meta[name="viewport"]').setAttribute('content', ZOOMABLE_VIEWPORT);
 
   frame.onload = () => {
     frame.style.display = 'block';
@@ -802,7 +808,7 @@ function openWebview(url) {
   const isImage = /\.(jpe?g|png|gif|webp|avif|bmp|svg)(\?.*)?(#.*)?$/i.test(url);
   if (isImage) {
     frame.removeAttribute('src');
-    frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+    frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes">
       <style>html,body{margin:0;height:100%;background:#000}
       body{display:flex;align-items:center;justify-content:center}
       img{max-width:100%;max-height:100%;object-fit:contain}</style></head>
@@ -818,6 +824,7 @@ function closeWebview() {
   const frame = document.getElementById('webviewFrame');
   overlay.classList.remove('open');
   document.body.style.overflow = '';
+  document.querySelector('meta[name="viewport"]').setAttribute('content', LOCKED_VIEWPORT);
   frame.onload = null;
   frame.removeAttribute('srcdoc');
   frame.src = 'about:blank';
